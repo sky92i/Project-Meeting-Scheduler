@@ -73,6 +73,121 @@ int searchStaffIndex(char *staff[], char *input, int staffCount){
     return -1;
 }
 
+char FilledSlot[1000][10];
+int FilledSlotCount = 0;
+
+int checkRequest(int teamsCount, team teams[], char input1[], char input2[], char input3[], char input4[]){
+    int wrongInput = 0;
+    int exist = 0;
+    //printf("%d\n", teamsCount);
+    //printf("%s %s %s %s\n", input1, input2, input3, input4);
+    if (atoi(&input4[0]) < 1 || atoi(&input4[0]) > 9){
+        printf("Invalid duration\n");
+        wrongInput = 1;
+        return 2;
+    }
+    for (int x = 0; x < teamsCount; x++){ // check team existence
+        //printf("%s %s\n", &teams[x].team[5], &input1[5]);
+        if (strcmp(&teams[x].team[5], &input1[5]) == 0 && &teams[x].team[5] != 0){
+            exist = 1;
+            break;
+        }
+    }
+    if(exist != 1) {
+        printf("Input team is not exist\n");
+        return 2;
+    }
+    int i = 0;
+    int timeSlotInvalid = 0;
+    if(wrongInput != 1 && exist == 1) {
+        for(i = 0; i < atoi(&input4[0]); i++) { // loop n times if duration is n
+            char dateTimeTeam[10] = {0}; // used to save info of request, e.g. Team_A 2022-04-25 09:00 -> 2509A
+            if(i >= 1) { // if duration is more than 1h
+                char str1[10] = {0}; // temporary 
+                sprintf(str1, "%d", atoi(&input3[0]) + i); // add duration e.g. 09+1=10 and then convert integer to string
+                //printf("%s\n", str1);
+                //printf("%s", &str1[0]);
+                strcpy(&dateTimeTeam[0], &input2[8]); // e.g. Team_A 2022-04-25 09:00, dateTimeTeam is 25
+                strcat(&dateTimeTeam[0], &str1[0]); // dateTimeTeam is 2509
+                strcat(&dateTimeTeam[0], &input1[5]); // dateTimeTeam is 2509A
+                //printf("%s", &dateTimeTeam[0]);
+            }
+            else{ // if duration is 1h only
+                strcpy(&dateTimeTeam[0], &input2[8]);
+                strncat(&dateTimeTeam[0], &input3[0], 2);
+                strcat(&dateTimeTeam[0], &input1[5]);
+            }
+
+            for(int a = 0; a < FilledSlotCount; a++){
+                if(strcmp(&dateTimeTeam[0], FilledSlot[a]) == 0) { // if same team in the same timeslot
+                    printf("Time clash, same team in the same timeslot\n");
+                    timeSlotInvalid = 1;
+                }
+                // if different team but same timeslot, need to check input team's member availabiliy.
+                // i.e. Are there any common members in the current team and previously entered teams
+                else if((strncmp(&dateTimeTeam[0], FilledSlot[a], 4) == 0) && (strcmp(&dateTimeTeam[0], FilledSlot[a]) != 0)) {
+                    printf("The requested timeslot has another team requested before, further checking...\n");
+                    int tmpTeamIndex1 = 0;
+                    int tmpTeamIndex2 = 0;
+                    for (int x = 0; x < teamsCount; x++){
+                        if (strcmp(&teams[x].team[5], &FilledSlot[a][4]) == 0){ // find previously entered team index
+                            tmpTeamIndex1 = x;
+                            //printf("tmpIn1 %d\n", tmpTeamIndex1);
+                        }
+                        if (strcmp(&teams[x].team[5], &input1[5]) == 0){ // find current team index
+                            tmpTeamIndex2 = x;
+                            //printf("tmpIn2 %d\n", tmpTeamIndex2);
+                        }
+                    }
+
+                    // previously entered team vs current team
+                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
+                        printf("time clash1: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
+                        printf("time clash2: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
+                        printf("time clash3: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
+
+                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
+                        printf("time clash4: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
+                        printf("time clash5: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
+                        printf("time clash6: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
+                        printf("time clash7: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
+
+                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
+                        printf("time clash8: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
+                        printf("time clash9: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
+                        printf("time clash10: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
+                        printf("time clash11: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
+
+                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
+                        printf("time clash12: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
+                        printf("time clash13: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
+                        printf("time clash14: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
+                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
+                        printf("time clash15: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
+                }
+            }
+
+            if(timeSlotInvalid == 0) { // Record dateTimeTeam for valid request
+                strcpy(FilledSlot[FilledSlotCount], &dateTimeTeam[0]);
+                printf("slot filled: %s\n", FilledSlot[FilledSlotCount]); // for debugging
+                FilledSlotCount++;
+            }
+            else break;
+        }
+    }
+    return timeSlotInvalid;
+}
+
 int main(int argc, char *argv[]){
     // variables
     int i, j, valid;
@@ -268,23 +383,52 @@ int main(int argc, char *argv[]){
             else {
                 if (input[0][1] == 'a'){ // input for 2a. Single input
                     fprintf(log,"%s %s %s %s\n", input[1], input[2], input[3], input[4]);
-                    // TODO check if valid then to print to user
-//                    if (){
-//                        printf(">>>>>> Your request has been accepted.\n");
-//                    }
-//                    else{
-//                        printf(">>>>>> Your batch request has been rejected.\n");
-//                    }
+                    
+                    // check the validity of the request.
+                    if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 0) {
+                        printf("\n>>>>>> Your request has been accepted.\n");
+
+//                      TODO
+//                      Create meeting?
+                    }
+                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 1)
+                        printf("\n>>>>>> Your request has been rejected.\n");
+                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 2)
+                        printf("\n>>>>>> Your request is invalid.\n");
                 }
                 else{ // input for 2b. Batch input
-                    printf("hi,%s\n", input[1]);
+                    // e.g. 2b batch01_Requests.dat for 2b input
+                    printf("hi,%s\n\n", input[1]);
                     batchFile = fopen(input[1],"r");
                     if (batchFile == NULL){
                         printf("Error in opening input file\n");
                         exit(1);
                     }
+                    int lineNum = 0;
                     while (fgets(batchBuf, 80, batchFile) != NULL){ // read batch input line by line
                         fputs(batchBuf, log); // write line from batch input to log
+
+                        lineNum++;
+                        char batchInput[30][30] = {0}; // for checkRequest function
+                        
+                        // extract the info of a line and copy to batchInput
+                        strncpy(batchInput[0], batchBuf, 6);
+                        strncpy(batchInput[1], &batchBuf[7], 10);
+                        strncpy(batchInput[2], &batchBuf[18], 5);
+                        strncpy(batchInput[3], &batchBuf[24], 1);
+                        printf("%s %s %s %s\n", batchInput[0], batchInput[1], batchInput[2], batchInput[3]);  // for debugging
+
+                        // check the validity of the request. 0 is valid
+                        if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 0) {
+                            printf(">>>>>> Line %d request has been accepted.\n\n", lineNum);
+
+//                      TODO
+//                      Create meeting?
+                        }
+                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 1)
+                            printf(">>>>>> Line %d request has been rejected.\n\n", lineNum);
+                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 2)
+                            printf(">>>>>> Line %d request is invalid.\n\n", lineNum);
                     }
                     fclose(batchFile);
                     printf(">>>>>> Your batch request has been recorded.\n");
