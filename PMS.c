@@ -16,14 +16,11 @@ typedef struct {
     //int availability[162] ;
 }team;
 
-// not used
 typedef struct {
-    char name[21];
     int teamsIndex;
     int date;
     int startTime;
     int duration;
-    int endTime;
 }meeting;
 
 // just an idea
@@ -53,16 +50,21 @@ int creatTeam(team teams[], int index, int managerCount[], int memberCount[], ch
     return 1;
 }
 
-// an idea
-meeting createMeeting(char name[21], int teamsIndex, int date, int startTime, int endTime){
-    meeting a;
-    strncpy(a.name, name, 21);
-    a.teamsIndex = teamsIndex;
-    a.date = date;
-    a.startTime = startTime;
-    a.endTime = endTime;
-    a.duration = endTime - startTime;
-    return a;
+int createMeeting(meeting meetings[], int meetingsCount, team teams[], int teamsCount, char *teamName, char *date, char *startTime, char *duration){
+    int i;
+    char tmp[3] = {0};
+    for (i = 0; i < teamsCount; i++){
+        if (strcmp(teams[i].team, teamName) == 0){
+            meetings[meetingsCount].teamsIndex = i;
+        }
+    }
+    tmp[0] = date[8]; tmp[1] = date[9]; tmp[2] = 0; // find days in date e.g. 25 in 2022-04-25
+    meetings[meetingsCount].date = atoi(tmp);
+    tmp[0] = startTime[0]; tmp[1] = startTime[1]; // find hours in startTime e.g. 09 in 09:00
+    meetings[meetingsCount].startTime = atoi(startTime);
+    meetings[meetingsCount].duration = atoi(duration);
+    return 1;
+
 }
 
 int searchStaffIndex(char *staff[], char *input, int staffCount){
@@ -103,7 +105,7 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
         for(i = 0; i < atoi(&input4[0]); i++) { // loop n times if duration is n
             char dateTimeTeam[10] = {0}; // used to save info of request, e.g. Team_A 2022-04-25 09:00 -> 2509A
             if(i >= 1) { // if duration is more than 1h
-                char str1[10] = {0}; // temporary 
+                char str1[10] = {0}; // temporary
                 sprintf(str1, "%d", atoi(&input3[0]) + i); // add duration e.g. 09+1=10 and then convert integer to string
                 //printf("%s\n", str1);
                 //printf("%s", &str1[0]);
@@ -123,8 +125,8 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
                     printf("Time clash, same team in the same timeslot\n");
                     timeSlotInvalid = 1;
                 }
-                // if different team but same timeslot, need to check input team's member availabiliy.
-                // i.e. Are there any common members in the current team and previously entered teams
+                    // if different team but same timeslot, need to check input team's member availabiliy.
+                    // i.e. Are there any common members in the current team and previously entered teams
                 else if((strncmp(&dateTimeTeam[0], FilledSlot[a], 4) == 0) && (strcmp(&dateTimeTeam[0], FilledSlot[a]) != 0)) {
                     printf("The requested timeslot has another team requested before, further checking...\n");
                     int tmpTeamIndex1 = 0;
@@ -196,9 +198,11 @@ int main(int argc, char *argv[]){
     char buf1[80];
     char buf2[80];
     char batchBuf[80];
-    int ppid = getpid(), pid = getpid();
+    int pid = getpid();
+    char tmpDate[3];
     char tmpInput[80] = {0};
     char input[30][30] = {0};
+    char command[30][30] = {0};
     FILE *log = NULL;
     FILE *batchFile = NULL;
     int option = 0;
@@ -210,7 +214,7 @@ int main(int argc, char *argv[]){
     slot slots[162] = {0};
     meeting meetings[200] = {0};
     team teams[20] = {0};
-    int staffCount = 8, slotsCount =0 , meetingsCount = 0 , teamsCount = 0;
+    int staffCount = 8, slotsCount = 0 , meetingsCount = 0 , teamsCount = 0;
 
     // create pipes for 4 child process: FCFS, XXXX, rescheduling, output
     for (i = 0; i < 4; ++i) {
@@ -226,58 +230,84 @@ int main(int argc, char *argv[]){
         }
     }
 
-    // fork and close unused pipes
-    for (i = 0; i < 4; ++i) {
-        pid = fork();
-        if (pid == 0){ // child
-            for(j = 0; j < 4; j++){
-                if (i == j) {
-                    close(fdp2c[i][1]); // close fd[1] (output) in child side for parent -> child
-                    close(fdc2p[i][0]); // close fd[0] (input) in child side for child -> parent
-                }
-                else{
-                    // close pipes not related to this child
-                    close(fdp2c[i][0]);
-                    close(fdp2c[i][1]);
-                    close(fdc2p[i][0]);
-                    close(fdc2p[i][1]);
-                }
+    if (fork() == 0){ // FCFS
+        close(fdp2c[0][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[0][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i < 4 ; i++) {
+            if (i != 0) {
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
             }
-            break; // break so not to fork child of child
         }
-    }
-    pid = getpid();
-
-    if (pid - ppid == 1){ // FCFS
         printf("This is child process for FCFS\n");
         close(fdp2c[0][0]);
         close(fdc2p[0][1]);
         exit(0);
     }
-    else if (pid - ppid == 2){ // XXXX algorithm
+
+    if (fork() == 0){ // XXXX algorithm
+        close(fdp2c[1][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[1][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i <4 ; ++i) {
+            if (i != 1){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
         printf("This is child process for XXXX\n");
         close(fdp2c[1][0]);
         close(fdc2p[1][1]);
         exit(0);
     }
-    else if (pid - ppid == 3){ // Rescheduling algorithm
+
+    if (fork() == 0){ // Rescheduling algorithm
+        close(fdp2c[2][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[2][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i < 4; i++) {
+            if (i != 2){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
         printf("This is child process for Rescheduling\n");
         close(fdp2c[2][0]);
         close(fdc2p[2][1]);
         exit(0);
     }
-    else if (pid - ppid == 4){ // Output
+
+    if (fork() == 0){ // Output
+        close(fdp2c[3][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[3][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i < 4; i++){
+            if (i != 3){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
         printf("This is child process for output\n");
         close(fdp2c[3][0]);
         close(fdc2p[3][1]);
         exit(0);
     }
 
+
     // parent
 
     sleep(1); // testing
 
-    // closed unused pipes
+    // closed unused pipes for parent
     for (i = 0; i < 4; ++i) {
         close(fdp2c[i][0]);
         close(fdc2p[i][1]);
@@ -330,6 +360,7 @@ int main(int argc, char *argv[]){
             count = 0;
             tmp = strtok(tmpInput, " ");
             while (tmp != NULL){
+                strncpy(command[count+1], tmp, 30);
                 strncpy(input[count++], tmp, 30);
                 tmp = strtok(NULL, " ");
             }
@@ -347,7 +378,12 @@ int main(int argc, char *argv[]){
                 //printf("hi,%s %s %d %d\n", teams[teamsCount].team, teams[teamsCount].project, teams[teamsCount].managerIndex, teams[teamsCount].memberBIndex);
 
                 if (valid == 1) {
-                    // TODO send command through pips to all child, but send what
+                    // TODO sends command in array to FCFS, XXXX, rescheduling process; in form:"1 Team_A Project_A Alan Cathy Fanny Helen"
+                    strcpy(command[0], "1");
+                    //write(fdp2c[0][1], command, 900*sizeof(char));
+                    //write(fdp2c[1][1], command, 900*sizeof(char));
+                    //write(fdp2c[2][1], command, 900*sizeof(char));
+                    //printf("the command is %s %s %s %s %s %s\n", command[0], command[1], command[2], command[3], command[4], command[5]);
                     printf(">>>>>> Project %s is created.\n", input[0]);
                     teamsCount++;
                 }
@@ -357,6 +393,7 @@ int main(int argc, char *argv[]){
                     printf(">>>>>> Project %s is not created due to member has exceed project limit.\n", input[0]);
             }
             memset(input, 0, sizeof(input)); // clear previous input
+            memset(command, 0, sizeof(command)); // clear previous command
         }
 
 
@@ -383,22 +420,31 @@ int main(int argc, char *argv[]){
             else {
                 if (input[0][1] == 'a'){ // input for 2a. Single input
                     fprintf(log,"%s %s %s %s\n", input[1], input[2], input[3], input[4]);
-                    
+
                     // check the validity of the request.
                     if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 0) {
-                        printf("\n>>>>>> Your request has been accepted.\n");
+                        // TODO sends command in array to FCFS, XXXX, rescheduling process; in form:"2a Team_A 2022-04-25 09:00"
+                        // sends command in array to FCFS, XXXX, rescheduling process by
+//                        write(fdp2c[0][1], input, 900*sizeof(char));
+//                        write(fdp2c[1][1], input, 900*sizeof(char));
+//                        write(fdp2c[2][1], input, 900*sizeof(char));
+                        printf(">>>>>> Your request has been accepted.\n");
 
 //                      TODO
-//                      Create meeting?
+//                      Create meeting? Answering: I think I'll pass the command for algo process to create meeting,
+//                                                 there's no good reason to create it in parent process if it is already validated
+                        // An instance for algo process to create meeting:
+//                        createMeeting(meetings, meetingsCount, teams, teamsCount, input[1], input[2], input[3], input[4]);
+//                        meetingsCount++;
+//                        printf("meeting format is %d, %d, %d, %d\n", meetings[meetingsCount-1].teamsIndex, meetings[meetingsCount-1].date, meetings[meetingsCount-1].startTime, meetings[meetingsCount-1].duration);
                     }
                     else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 1)
-                        printf("\n>>>>>> Your request has been rejected.\n");
+                        printf(">>>>>> Your request has been rejected.\n");
                     else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 2)
-                        printf("\n>>>>>> Your request is invalid.\n");
+                        printf(">>>>>> Your request is invalid.\n");
                 }
                 else{ // input for 2b. Batch input
                     // e.g. 2b batch01_Requests.dat for 2b input
-                    printf("hi,%s\n\n", input[1]);
                     batchFile = fopen(input[1],"r");
                     if (batchFile == NULL){
                         printf("Error in opening input file\n");
@@ -410,7 +456,7 @@ int main(int argc, char *argv[]){
 
                         lineNum++;
                         char batchInput[30][30] = {0}; // for checkRequest function
-                        
+
                         // extract the info of a line and copy to batchInput
                         strncpy(batchInput[0], batchBuf, 6);
                         strncpy(batchInput[1], &batchBuf[7], 10);
@@ -421,9 +467,23 @@ int main(int argc, char *argv[]){
                         // check the validity of the request. 0 is valid
                         if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 0) {
                             printf(">>>>>> Line %d request has been accepted.\n\n", lineNum);
-
+                            // stores command for algo process
+                            strcpy(command[0], "2a");
+                            strcpy(command[1], batchInput[0]);
+                            strcpy(command[2], batchInput[1]);
+                            strcpy(command[3], batchInput[2]);
+                            strcpy(command[4], batchInput[3]);
+                            // TODO sends command in array to FCFS, XXXX, rescheduling process; in form:"2a Team_A 2022-04-25 09:00"
+                            // sends command in array to FCFS, XXXX, rescheduling process by
+//                            write(fdp2c[0][1], command, 900*sizeof(char));
+//                            write(fdp2c[1][1], command, 900*sizeof(char));
+//                            write(fdp2c[2][1], command, 900*sizeof(char));
 //                      TODO
 //                      Create meeting?
+                            // An instance for algo process to create meeting:
+//                        createMeeting(meetings, meetingsCount, teams, teamsCount, command[1], command[2], command[3], command[4]);
+//                        meetingsCount++;
+//                        printf("meeting format is %d, %d, %d, %d\n", meetings[meetingsCount-1].teamsIndex, meetings[meetingsCount-1].date, meetings[meetingsCount-1].startTime, meetings[meetingsCount-1].duration);
                         }
                         else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 1)
                             printf(">>>>>> Line %d request has been rejected.\n\n", lineNum);
@@ -436,11 +496,12 @@ int main(int argc, char *argv[]){
                 }
             }
             memset(input, 0, sizeof(input)); // clear previous input
+            memset(command, 0, sizeof(command)); // clear previous command
         }
 
         // Menu part 3 for option 3
         /* inputs in form of "option_input"
-         * e.g. "3a, FCFS 2022-04-25 2022-04-27" for 3a. FCFS (First Come First Served) */
+         * e.g. "3a FCFS 2022-04-25 2022-04-27" for 3a. FCFS (First Come First Served) */
         while(option == 3){
             printf("%s", cmd3);
             printf("Enter> ");
@@ -459,23 +520,42 @@ int main(int argc, char *argv[]){
                 option = atoi(input[0]);
             }
             else {
+                strcpy(command[0], "3");
+                tmpDate[0] = input[2][8]; tmpDate[1] = input[2][9]; tmpDate[2] = 0; // set for starting date
+                strcpy(command[1], tmpDate);
+                tmpDate[0] = input[3][8]; tmpDate[1] = input[3][9]; tmpDate[2] = 0; // set for ending date
+                strcpy(command[2], tmpDate);
+//                printf("date is %s, %s\n",command[1], command[2]);
+
+                // TODO sends command in array, e.g. input:"3a FCFS 2022-04-25 2022-04-27"; in form:"3 FCFS 25 27" to FCFS process
+                // send command to corresponding algo process to pass output information to output process
+//                if (strcmp(input[0][1], "a") == 0) {
+//                    write(fdp2c[0][1], command, 900 * sizeof(char));
+//                }
+//                else if (strcmp(input[0][1], "b") == 0) {
+//                    write(fdp2c[1][1], command, 900 * sizeof(char));
+//                }
                 // TODO print schedule
                 printf(">>>>>> Printed. Export file name: Schedule_FCFS_01.txt.\n");
             }
             memset(input, 0, sizeof(input)); // clear previous input
+            memset(command, 0, sizeof(command)); // clear previous command
         }
 
     } while (option != 4);
     fclose(log);
 
-    //printf("third is %s %s %d %d %d %d\n", teams[2].team, teams[2].project, teams[2].managerIndex, teams[2].memberAIndex,
-    //       teams[2].memberBIndex, teams[2].memberCIndex);
+    // send signal to terminate child process
+//    strcpy(command[0], "4");
+//    for (i = 0; i < 4; ++i) {
+//        write(fdp2c[i][1], command, 900*sizeof(char));
+//    }
 
     for (i = 0; i < 4; i ++){
-        wait(NULL);
+        pid = wait(NULL);
         close(fdp2c[i][1]);
         close(fdc2p[i][0]);
-        //printf("Collected 1 child\n");
+        //printf("Collected 1 child, %d\n", pid);
     }
     printf("Exited successfully\n\n");
     return 0;
