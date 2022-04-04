@@ -23,7 +23,6 @@ typedef struct
     int duration;
 } meeting;
 
-
 meeting meetings[200] = {0};
 team teams[20] = {0};
 int fdp2c[4][2]; // parent -> child pipes
@@ -32,22 +31,44 @@ char *staff[] = {"Alan", "Billy", "Cathy", "David", "Eva", "Fanny", "Gary", "Hel
 int managerCount[8] = {0};
 int memberCount[8] = {0};
 int staffCount = 8, slotsCount = 0, meetingsCount = 0, teamsCount = 0;
-int rejectedMeetingIndex[200] = {-1}; // (FCFS)
-int numberOfRejects = 0; // (FCFS)
 int validDates[] = {25, 26, 27, 28, 29, 30, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14};
+
+int numberOfRejects = 0; // (FCFS)
 meeting acceptedMeetingsApr[8][100] = {0}; // "8" stands for the number of staff members (FCFS)
 meeting acceptedMeetingsMay[8][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning (FCFS)
 meeting acceptedMeetingsInorder[8][200] = {0}; // combined of the meetings in both months, sorted by date and start time (FCFS)
 int numAcceptedMeetingsApr[8] = {0}; // number of meetings accepted for each member (FCFS)
 int numAcceptedMeetingsMay[8] = {0}; // (FCFS)
+int rejectedMeetingIndex[200] = {-1}; // (FCFS)
+meeting rejectedMeetingsApr[100] = {0}; // (FCFS)
+meeting rejectedMeetingsMay[100] = {0}; // (FCFS)
+meeting rejectedMeetings[200] = {0}; // (FCFS)
+int numRejectedMeetingsApr = 0; // (FCFS)
+int numRejectedMeetingsMay = 0; // (FCFS)
+int apr[6][8][9] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
+int may[12][8][9] = {0}; // totally 12 working days in May
+int meetingHoursApr[6][8] = {0}; // humane criteria, recording the meeting hours of each member each day, 6 days in April
+int meetingHoursMay[12][8] = {0}; // 12 days in May
 
-void clearCmmdBuf(char cmmd[30][30]) // updated
+void clearSchedule() // should be called by FCFS after printing schedule every time, avoid mixing the data with next schedule command
+// updated
 {
-    int i;
-    for (i = 0; i < 30; i++)
-    {
-        memset(cmmd[i], 0, 30);
-    }
+    numberOfRejects = 0;
+    memset(acceptedMeetingsApr, 0, 800 * sizeof(meeting));
+    memset(acceptedMeetingsMay, 0, 800 * sizeof(meeting));
+    memset(acceptedMeetingsInorder, 0, 1600 * sizeof(meeting));
+    memset(numAcceptedMeetingsApr, 0, 8 * sizeof(int));
+    memset(numAcceptedMeetingsMay, 0, 8 * sizeof(int));
+    memset(rejectedMeetingIndex, 0, 200 * sizeof(int));
+    memset(rejectedMeetingsApr, 0, 100 * sizeof(meeting));
+    memset(rejectedMeetingsMay, 0, 100 * sizeof(meeting));
+    memset(rejectedMeetings, 0, 200 * sizeof(meeting));
+    numRejectedMeetingsApr = 0;
+    numRejectedMeetingsMay = 0;
+    memset(apr, 0, 6*8*9*sizeof(int));
+    memset(may, 0, 12*8*9* sizeof(int));
+    memset(meetingHoursApr, 0, 48 * sizeof(int));
+    memset(meetingHoursMay, 0, 96 * sizeof(int));
 }
 
 void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings) // updated
@@ -63,6 +84,9 @@ void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings) // updated
             {
                 minInex = j;
             }
+        }
+        if (minInex != i)
+        {
             // swapping of two meetings
             meeting dummy;
             memcpy(&dummy, &unsortedMeetings[minInex], sizeof(meeting));
@@ -120,8 +144,7 @@ int createMeeting(meeting meetings[], int meetingsCount, team teams[], int teams
 
 }
 
-int
-creatTeam(team teams[], int index, int managerCount[], int memberCount[], char *team, char *project, int managerIndex,
+int creatTeam(team teams[], int index, int managerCount[], int memberCount[], char *team, char *project, int managerIndex,
           int memberAIndex, int memberBIndex, int memberCIndex)
 {
     if (managerCount[managerIndex] == 1) return -1; // manager is already another project's manager
@@ -149,8 +172,6 @@ void FCFS() // only to be called by FCFS child
 {
     char recvCmmd[30][30]; // received command
     // only the meetings between 25/4 to 14/5 will be considered valid
-    int apr[6][8][9] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
-    int may[12][8][9] = {0}; // totally 12 working days in May
     // the first element of the staff on the day stands for the time 0900-1000, etc. the last element ([X][X][9]) stands for the time 1700-1800
     // considered boolean type, 0 stands for available, 1 stands for n/a
     while (1) // until a quit message is received from the parent
@@ -236,7 +257,7 @@ void FCFS() // only to be called by FCFS child
             }
             for (i = 0; i < meetingsCount; i++)
             {
-                int j;
+                int j, k;
                 int accepted = 1;
                 strcpy(currentTeam,
                        teams[meetings[i].teamsIndex].team); // the team name of the team in the i-th booking
@@ -250,8 +271,20 @@ void FCFS() // only to be called by FCFS child
                 if (date >= 25 && date <= 30) // in April
                 {
                     int dateIndex = date - 25; // offset: 25 --> 0, 26 --> 1, ... , 30 --> 5
-                    int timeIndex = startTime -
-                                    9; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time be 1800
+                    int timeIndex = startTime - 9; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time be 1800
+                    for (k = 0; k < 8; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
+                    {
+                        if ((duration + meetingHoursApr[dateIndex][k]) > 5)
+                        {
+                            accepted = 0;
+                            break;
+                        }
+                    }
+                    if (accepted == 0)
+                    {
+                        rejectedMeetingIndex[numberOfRejects++] = i;
+                        continue; // go to check next booked meeting
+                    }
                     for (j = 0; j < duration; j++)
                     {
                         if (apr[dateIndex][teams[meetings[i].teamsIndex].managerIndex][timeIndex + j] ==
@@ -281,27 +314,30 @@ void FCFS() // only to be called by FCFS child
                     }
                     if (accepted) // updating the meetings record and the time slots
                     {
-                        memcpy(&acceptedMeetingsApr[teams[meetings[i].teamsIndex].managerIndex][numAcceptedMeetingsApr[teams[meetings[i].teamsIndex].managerIndex]++], &meetings[i],
-                               sizeof(meeting)); // a meeting is accepted, update the related record for the manager
+                        memcpy(&acceptedMeetingsApr[teams[meetings[i].teamsIndex].managerIndex][numAcceptedMeetingsApr[teams[meetings[i].teamsIndex].managerIndex]++], &meetings[i],sizeof(meeting)); // a meeting is accepted, update the related record for the manager
+                        meetingHoursApr[dateIndex][teams[meetings[i].teamsIndex].managerIndex] += duration; // meeting hours of the manager on that day increased
                         if (memberA != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsApr[memberA][numAcceptedMeetingsApr[memberA]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursApr[dateIndex][memberA] += duration;
                         }
                         if (memberB != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsApr[memberB][numAcceptedMeetingsApr[memberB]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursApr[dateIndex][memberB] += duration;
                         }
                         if (memberC != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsApr[memberC][numAcceptedMeetingsApr[memberC]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursApr[dateIndex][memberC] += duration;
                         }
                         for (j = 0; j < duration; j++) // updating the time slots for each member
                         {
                             apr[dateIndex][teams[meetings[i].teamsIndex].managerIndex][timeIndex +
-                                                                                       j] = 1; // timeslot occupied, manager
+                                                                                       j] = 1; // occupy the timeslot, manager
                             if (memberA != -1)
                             {
                                 apr[dateIndex][memberA][timeIndex + j] = 1;
@@ -334,6 +370,19 @@ void FCFS() // only to be called by FCFS child
                         dateIndex = date - 3; // offset: 9 --> 6, 10 --> 7, ... , 14 --> 11
                     }
                     int timeIndex = startTime - 9;
+                    for (k = 0; k < 8; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
+                    {
+                        if ((duration + meetingHoursMay[dateIndex][k]) > 5) // exceeding 5 hours
+                        {
+                            accepted = 0;
+                            break;
+                        }
+                    }
+                    if (accepted == 0)
+                    {
+                        rejectedMeetingIndex[numberOfRejects++] = i;
+                        continue; // go to check next booked meeting
+                    }
                     for (j = 0; j < duration; j++)
                     {
                         if (may[dateIndex][teams[meetings[i].teamsIndex].managerIndex][timeIndex + j] ==
@@ -363,22 +412,25 @@ void FCFS() // only to be called by FCFS child
                     }
                     if (accepted) // update the meetings record and the timeslots
                     {
-                        memcpy(&acceptedMeetingsMay[teams[meetings[i].teamsIndex].managerIndex][numAcceptedMeetingsMay[teams[meetings[i].teamsIndex].managerIndex]++], &meetings[i],
-                               sizeof(meeting)); // a meeting is accepted, update the related record for the manager
+                        memcpy(&acceptedMeetingsMay[teams[meetings[i].teamsIndex].managerIndex][numAcceptedMeetingsMay[teams[meetings[i].teamsIndex].managerIndex]++], &meetings[i],sizeof(meeting)); // a meeting is accepted, update the related record for the manager
+                        meetingHoursMay[dateIndex][teams[meetings[i].teamsIndex].managerIndex] += duration;
                         if (memberA != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsMay[memberA][numAcceptedMeetingsMay[memberA]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursMay[dateIndex][memberA] += duration;
                         }
                         if (memberB != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsMay[memberB][numAcceptedMeetingsMay[memberB]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursMay[dateIndex][memberB] += duration;
                         }
                         if (memberC != -1) // record-updating
                         {
                             memcpy(&acceptedMeetingsMay[memberC][numAcceptedMeetingsMay[memberC]++], &meetings[i],
                                    sizeof(meeting));
+                            meetingHoursMay[dateIndex][memberC] += duration;
                         }
                         for (j = 0; j < duration; j++)
                         {
@@ -417,30 +469,24 @@ void FCFS() // only to be called by FCFS child
                 sortMeetings(acceptedMeetingsMay[i],numAcceptedMeetingsMay[i]); // meetings in May
                 mergeAprMay(acceptedMeetingsInorder[i], acceptedMeetingsApr[i], acceptedMeetingsMay[i], numAcceptedMeetingsApr[i], numAcceptedMeetingsMay[i]);
             }
+            // sort rejected meetings, similar to the above
+            for (i = 0; i < numberOfRejects; i++)
+            {
+                int rejectedMeetingDate = meetings[rejectedMeetingIndex[i]].date;
+                if (rejectedMeetingDate >= 25 && rejectedMeetingDate <= 30) // the rejected meetings in April
+                {
+                    memcpy(&rejectedMeetingsApr[numRejectedMeetingsApr++], &meetings[rejectedMeetingIndex[i]], sizeof(meeting));
+                }
+                else if (rejectedMeetingDate >= 2 && rejectedMeetingDate <= 14) // the rejected meetings in May
+                {
+                    memcpy(&rejectedMeetingsMay[numRejectedMeetingsMay++], &meetings[rejectedMeetingIndex[i]], sizeof(meeting));
+                }
+            }
+            sortMeetings(rejectedMeetingsApr, numRejectedMeetingsApr);
+            sortMeetings(rejectedMeetingsMay, numRejectedMeetingsMay);
+            mergeAprMay(rejectedMeetings, rejectedMeetingsApr, rejectedMeetingsMay, numRejectedMeetingsApr, numRejectedMeetingsMay);
             // TODO: print the schedule to a txt file
             // printing on terminal, for testing, temporary codes
-//            for (i = 0; i < numberOfRejects; i++)
-//            {
-//                int rejectedTeamIndex = meetings[rejectedMeetingIndex[i]].teamsIndex;
-//                int rejectedDate = meetings[rejectedMeetingIndex[i]].date;
-//                int rejectedStartTime = meetings[rejectedMeetingIndex[i]].startTime;
-//                int rejectedDuration = meetings[rejectedMeetingIndex[i]].duration;
-//                printf("Rejected: Team: %s, Date: %d, Start time: %d, Duration: %d\n", teams[rejectedTeamIndex].team,
-//                       rejectedDate, rejectedStartTime, rejectedDuration);
-//            }
-//            for (i = 0; i < 8; i++)
-//            {
-//                int k, startHour = 9;
-//                printf("==================================================================\n");
-//                printf("Staff: %s\n", staff[i]);
-//                for (k = 0; k < 9; k++) // 9 working hours
-//                {
-//                    printf("%d:00 - %d:00 : %d\n",startHour+k, startHour+k+1, apr[0][i][k]);
-//                }
-//            }
-//            printf("Number of accepted meetings (Alan): %d\n",numAcceptedMeetingsApr[0]);
-//            printf("Number of accepted meetings (Cathy): %d\n",numAcceptedMeetingsApr[2]);
-//            printf("Start time: %d\n",acceptedMeetingsApr[0][0].startTime);
             printf("*** Project Meeting ***\n\n");
             printf("Algorithm used: FCFS\n");
             int startMonth;
@@ -477,9 +523,9 @@ void FCFS() // only to be called by FCFS child
             for (i = 0; i < 8; i++) // 8 staff members
             {
                 int j;
-                printf("Date\t\t\tStart\t\t\tEnd\t\t\tTeam\t\t\tProject\n");
-                printf("=========================================================================\n");
-                for (j = startDateIndex; j < endDateIndex; j++)
+                printf("Date\t\t\tStart\t\tEnd\t\t\tTeam\t\t\tProject\n");
+                printf("==================================================================================\n");
+                for (j = startDateIndex; j < endDateIndex+1; j++)
                 {
                     int k;
                     for (k = 0; k < numAcceptedMeetingsApr[i]+numAcceptedMeetingsMay[i]; k++)
@@ -510,7 +556,7 @@ void FCFS() // only to be called by FCFS child
                         sprintf(dummyDate2, "%d", currentDate);
                         strcat(dummyDate, dummyDate2);
                         strcat(stringDate, dummyDate); // string date ok, to be printed
-                        if (startTime == 9)
+                        if (currentStart == 9)
                         {
                             strcpy(stringStartTime, "0");
                         }
@@ -520,12 +566,59 @@ void FCFS() // only to be called by FCFS child
                         sprintf(dummyTime, "%d", currentEnd);
                         strcat(stringEndTime, dummyTime);
                         strcat(stringEndTime, ":00"); // string end time ok, to be printed
-                        printf("%s\t\t%s\t\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
+                        printf("%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
                     }
                 }
-                printf("=========================================================================\n");
-                printf("Staff: %s\n\n",staff[i]);
+                printf("==================================================================================\n");
+                printf("Staff: %s\n\n\n",staff[i]);
+
             }
+            printf("\t\t\t\t\t\t\t\t\t- End -\n");
+            // rejected meetings
+            printf("\n\n*** Meeting Request - REJECTED ***\n\n");
+            printf("There are %d requests rejected for the required period.\n", numberOfRejects);
+            printf("==================================================================================\n");
+            for (i = startDateIndex; i < endDateIndex+1; i++)
+            {
+                int j;
+                for (j = 0; j < numberOfRejects; j++)
+                {
+                    int currentDate = rejectedMeetings[j].date;
+                    int currentStart = rejectedMeetings[j].startTime;
+                    int currentTeamIndex = rejectedMeetings[j].teamsIndex;
+                    if (currentDate != validDates[i])
+                    {
+                        continue;
+                    }
+                    char currentTeamName[21]; // to be printed
+                    char stringDate[21] = "2022-"; // to be printed
+                    char dummyDate[10], dummyDate2[4];
+                    char stringStartTime[10] = {0}, stringEndTime[10] = {0};
+                    char dummyTime[6];
+                    strcpy(currentTeamName, teams[currentTeamIndex].team);
+                    if (currentDate >= 25 && currentDate <= 30) // april
+                    {
+                        strcpy(dummyDate, "04-");
+                    }
+                    else // may
+                    {
+                        strcpy(dummyDate, "05-");
+                    }
+                    sprintf(dummyDate2, "%d", currentDate);
+                    strcat(dummyDate, dummyDate2);
+                    strcat(stringDate, dummyDate); // string date ok, to be printed
+                    if (currentStart == 9)
+                    {
+                        strcpy(stringStartTime, "0");
+                    }
+                    sprintf(dummyTime, "%d", currentStart);
+                    strcat(stringStartTime, dummyTime);
+                    strcat(stringStartTime, ":00"); // string start time ok, to be printed
+                    printf("%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
+                }
+            }
+            printf("==================================================================================\n");
+            clearSchedule();
         }
         else if (strcmp(recvCmmd[0], "end") == 0)
         {
@@ -609,6 +702,15 @@ int main()
     strcpy(cmmd[0], "2a");
     strcpy(cmmd[1], "Team_A");
     strcpy(cmmd[2], "2022-04-25");
+    strcpy(cmmd[3], "17:00");
+    strcpy(cmmd[4], "1");
+
+    write(fdp2c[0][1], cmmd, 900 * sizeof(char));
+    memset(cmmd,0, 900 * sizeof(char));
+
+    strcpy(cmmd[0], "2a");
+    strcpy(cmmd[1], "Team_A");
+    strcpy(cmmd[2], "2022-04-25");
     strcpy(cmmd[3], "12:00");
     strcpy(cmmd[4], "2");
 
@@ -624,6 +726,14 @@ int main()
     write(fdp2c[0][1], cmmd, 900 * sizeof(char));
     memset(cmmd,0, 900 * sizeof(char));
 
+    strcpy(cmmd[0], "2a");
+    strcpy(cmmd[1], "Team_A");
+    strcpy(cmmd[2], "2022-04-26");
+    strcpy(cmmd[3], "10:00");
+    strcpy(cmmd[4], "2");
+
+    write(fdp2c[0][1], cmmd, 900 * sizeof(char));
+    memset(cmmd,0, 900 * sizeof(char));
     strcpy(cmmd[0], "2a");
     strcpy(cmmd[1], "Team_A");
     strcpy(cmmd[2], "2022-04-25");
@@ -642,7 +752,26 @@ int main()
     write(fdp2c[0][1], cmmd, 900 * sizeof(char));
     memset(cmmd,0, 900 * sizeof(char));
 
-    strcpy(cmmd[0], "2a"); // make a booking for team_B, should be time-clashed with the previous booking of team_A
+    strcpy(cmmd[0], "2a");
+    strcpy(cmmd[1], "Team_B");
+    strcpy(cmmd[2], "2022-04-26");
+    strcpy(cmmd[3], "12:00");
+    strcpy(cmmd[4], "2");
+
+    write(fdp2c[0][1], cmmd, 900 * sizeof(char));
+    memset(cmmd,0, 900 * sizeof(char));
+
+
+    strcpy(cmmd[0], "2a");
+    strcpy(cmmd[1], "Team_A");
+    strcpy(cmmd[2], "2022-04-26");
+    strcpy(cmmd[3], "15:00");
+    strcpy(cmmd[4], "3");
+
+    write(fdp2c[0][1], cmmd, 900 * sizeof(char));
+    memset(cmmd,0, 900 * sizeof(char));
+
+    strcpy(cmmd[0], "2a"); // make a booking for team_B, should be time-clashed
     strcpy(cmmd[1], "Team_B");
     strcpy(cmmd[2], "2022-04-25");
     strcpy(cmmd[3], "14:00");
