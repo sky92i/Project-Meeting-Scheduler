@@ -168,115 +168,53 @@ char FilledSlot[1000][10];
 int FilledSlotCount = 0;
 
 int checkRequest(int teamsCount, team teams[], char input1[], char input2[], char input3[], char input4[]){
-//    int wrongInput = 0;
-//    int exist = 0;
-//    //printf("%d\n", teamsCount);
-//    //printf("%s %s %s %s\n", input1, input2, input3, input4);
-//    if (atoi(&input4[0]) < 1 || atoi(&input4[0]) > 9){
-//        printf("Invalid duration\n");
-//        wrongInput = 1;
-//        return 2;
-//    }
-//    for (int x = 0; x < teamsCount; x++){ // check team existence
-//        //printf("%s %s\n", &teams[x].team[5], &input1[5]);
-//        if (strcmp(&teams[x].team[5], &input1[5]) == 0 && &teams[x].team[5] != 0){
-//            exist = 1;
-//            break;
-//        }
-//    }
-//    if(exist != 1) {
-//        printf("Input team is not exist\n");
-//        return 2;
-//    }
-//    int i = 0;
-//    int timeSlotInvalid = 0;
-//    if(wrongInput != 1 && exist == 1) {
-//        for(i = 0; i < atoi(&input4[0]); i++) { // loop n times if duration is n
-//            char dateTimeTeam[10] = {0}; // used to save info of request, e.g. Team_A 2022-04-25 09:00 -> 2509A
-//            if(i >= 1) { // if duration is more than 1h
-//                char str1[10] = {0}; // temporary
-//                sprintf(str1, "%d", atoi(&input3[0]) + i); // add duration e.g. 09+1=10 and then convert integer to string
-//                //printf("%s\n", str1);
-//                //printf("%s", &str1[0]);
-//                strcpy(&dateTimeTeam[0], &input2[8]); // e.g. Team_A 2022-04-25 09:00, dateTimeTeam is 25
-//                strcat(&dateTimeTeam[0], &str1[0]); // dateTimeTeam is 2509
-//                strcat(&dateTimeTeam[0], &input1[5]); // dateTimeTeam is 2509A
-//                //printf("%s", &dateTimeTeam[0]);
-//            }
-//            else{ // if duration is 1h only
-//                strcpy(&dateTimeTeam[0], &input2[8]);
-//                strncat(&dateTimeTeam[0], &input3[0], 2);
-//                strcat(&dateTimeTeam[0], &input1[5]);
-//            }
-//
-//            for(int a = 0; a < FilledSlotCount; a++){
-//                if(strcmp(&dateTimeTeam[0], FilledSlot[a]) == 0) { // if same team in the same timeslot
-//                    printf("Time clash, same team in the same timeslot\n");
-//                    timeSlotInvalid = 1;
-//                }
-//                    // if different team but same timeslot, need to check input team's member availabiliy.
-//                    // i.e. Are there any common members in the current team and previously entered teams
-//                else if((strncmp(&dateTimeTeam[0], FilledSlot[a], 4) == 0) && (strcmp(&dateTimeTeam[0], FilledSlot[a]) != 0)) {
-//                    printf("The requested timeslot has another team requested before, further checking...\n");
-//                    int tmpTeamIndex1 = 0;
-//                    int tmpTeamIndex2 = 0;
-//                    for (int x = 0; x < teamsCount; x++){
-//                        if (strcmp(&teams[x].team[5], &FilledSlot[a][4]) == 0){ // find previously entered team index
-//                            tmpTeamIndex1 = x;
-//                            //printf("tmpIn1 %d\n", tmpTeamIndex1);
-//                        }
-//                        if (strcmp(&teams[x].team[5], &input1[5]) == 0){ // find current team index
-//                            tmpTeamIndex2 = x;
-//                            //printf("tmpIn2 %d\n", tmpTeamIndex2);
-//                        }
-//                    }
-//
-//                    // previously entered team vs current team
-//                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
-//                        printf("time clash1: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
-//                        printf("time clash2: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].managerIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].managerIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
-//                        printf("time clash3: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
-//
-//                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
-//                        printf("time clash4: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
-//                        printf("time clash5: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
-//                        printf("time clash6: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberAIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberAIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
-//                        printf("time clash7: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
-//
-//                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
-//                        printf("time clash8: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
-//                        printf("time clash9: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
-//                        printf("time clash10: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberBIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberBIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
-//                        printf("time clash11: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
-//
-//                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].managerIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].managerIndex >= 0) {
-//                        printf("time clash12: Input team's manager is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberAIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberAIndex >= 0) {
-//                        printf("time clash13: Input team's member A is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberBIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberBIndex >= 0) {
-//                        printf("time clash14: Input team's member B is not avaliable\n"); timeSlotInvalid = 1;}
-//                    if((teams[tmpTeamIndex1].memberCIndex == teams[tmpTeamIndex2].memberCIndex) && teams[tmpTeamIndex1].memberCIndex >= 0 && teams[tmpTeamIndex2].memberCIndex >= 0) {
-//                        printf("time clash15: Input team's member C is not avaliable\n"); timeSlotInvalid = 1;}
-//                }
-//            }
-//
-//            if(timeSlotInvalid == 0) { // Record dateTimeTeam for valid request
-//                strcpy(FilledSlot[FilledSlotCount], &dateTimeTeam[0]);
-//                printf("slot filled: %s\n", FilledSlot[FilledSlotCount]); // for debugging
-//                FilledSlotCount++;
-//            }
-//            else break;
-//        }
-//    }
-//    return timeSlotInvalid;
+    //printf("%d\n", teamsCount);
+    //printf("%s %s %s %s\n", input1, input2, input3, input4);
+    //printf("test: %d\n", atoi(&input2[8]));
+
+    // check team existence
+    int exist = 0;
+    for (int x = 0; x < teamsCount; x++){
+        //printf("%s %s\n", &teams[x].team[5], &input1[5]);
+        if (strcmp(&teams[x].team[5], &input1[5]) == 0 && &teams[x].team[5] != 0){
+            exist = 1;
+            break;
+        }
+    }
+    if(exist != 1) {
+        printf("Entered team does not exist.\n");
+        return -1;
+    }
+
+    // check date
+    char april[] = "2022-04-";
+    char may[] = "2022-05-";
+    if( (strncmp(input2, april, 8) == 0 && (atoi(&input2[8]) < 25 || atoi(&input2[8]) > 31)) || 
+        (strncmp(input2, may, 8) == 0 && (atoi(&input2[8]) < 1 || atoi(&input2[8]) > 14))  || 
+        (strncmp(input2, april, 8) != 0 && strncmp(input2, may, 8) != 0) ) {
+        printf("Invalid date. The valid meeting date is from 2022-04-25 to 2022-05-14.\n");
+        return -1;
+    }
+    if(atoi(&input2[8]) == 1 || atoi(&input2[8]) == 8) {
+        printf("Invalid date. Sunday is not a working day.\n");
+        return -1;
+    }
+    
+    // check time
+    if (atoi(&input3[0]) < 9 || atoi(&input3[0]) > 18){
+        printf("Invalid time. The valid meeting time is from 09:00 to 18:00.\n");
+        return -1;
+    }
+
+    // check duration
+    if (atoi(&input4[0]) < 1 || atoi(&input4[0]) > 9){
+        printf("Invalid duration. Duration cannot < 1 or > 9.\n");
+        return -1;
+    }
+    if ((atoi(&input4[0]) + atoi(&input3[0])) > 18 ){
+        printf("Invalid duration. The end time is after 18:00.\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -791,59 +729,59 @@ int main(int argc, char *argv[]){
         exit(0);
     }
 
-//    if (fork() == 0){ // XXXX algorithm
-//        close(fdp2c[1][1]); // close fd[1] (output) in child side for parent -> child
-//        close(fdc2p[1][0]); // close fd[0] (input) in child side for child -> parent
-//        for (i = 0; i <4 ; ++i) {
-//            if (i != 1){
-//                // close pipes not related to this child
-//                close(fdp2c[i][0]);
-//                close(fdp2c[i][1]);
-//                close(fdc2p[i][0]);
-//                close(fdc2p[i][1]);
-//            }
-//        }
-//        printf("This is child process for XXXX\n");
-//        close(fdp2c[1][0]);
-//        close(fdc2p[1][1]);
-//        exit(0);
-//    }
-//
-//    if (fork() == 0){ // Rescheduling algorithm
-//        close(fdp2c[2][1]); // close fd[1] (output) in child side for parent -> child
-//        close(fdc2p[2][0]); // close fd[0] (input) in child side for child -> parent
-//        for (i = 0; i < 4; i++) {
-//            if (i != 2){
-//                // close pipes not related to this child
-//                close(fdp2c[i][0]);
-//                close(fdp2c[i][1]);
-//                close(fdc2p[i][0]);
-//                close(fdc2p[i][1]);
-//            }
-//        }
-//        printf("This is child process for Rescheduling\n");
-//        close(fdp2c[2][0]);
-//        close(fdc2p[2][1]);
-//        exit(0);
-//    }
-//
-//    if (fork() == 0){ // Output
-//        close(fdp2c[3][1]); // close fd[1] (output) in child side for parent -> child
-//        close(fdc2p[3][0]); // close fd[0] (input) in child side for child -> parent
-//        for (i = 0; i < 4; i++){
-//            if (i != 3){
-//                // close pipes not related to this child
-//                close(fdp2c[i][0]);
-//                close(fdp2c[i][1]);
-//                close(fdc2p[i][0]);
-//                close(fdc2p[i][1]);
-//            }
-//        }
-//        printf("This is child process for output\n");
-//        close(fdp2c[3][0]);
-//        close(fdc2p[3][1]);
-//        exit(0);
-//    }
+    /*if (fork() == 0){ // XXXX algorithm
+        close(fdp2c[1][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[1][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i <4 ; ++i) {
+            if (i != 1){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
+        printf("This is child process for XXXX\n");
+        close(fdp2c[1][0]);
+        close(fdc2p[1][1]);
+        exit(0);
+    }
+
+    if (fork() == 0){ // Rescheduling algorithm
+        close(fdp2c[2][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[2][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i < 4; i++) {
+            if (i != 2){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
+        printf("This is child process for Rescheduling\n");
+        close(fdp2c[2][0]);
+        close(fdc2p[2][1]);
+        exit(0);
+    }
+
+    if (fork() == 0){ // Output
+        close(fdp2c[3][1]); // close fd[1] (output) in child side for parent -> child
+        close(fdc2p[3][0]); // close fd[0] (input) in child side for child -> parent
+        for (i = 0; i < 4; i++){
+            if (i != 3){
+                // close pipes not related to this child
+                close(fdp2c[i][0]);
+                close(fdp2c[i][1]);
+                close(fdc2p[i][0]);
+                close(fdc2p[i][1]);
+            }
+        }
+        printf("This is child process for output\n");
+        close(fdp2c[3][0]);
+        close(fdc2p[3][1]);
+        exit(0);
+    }*/
 
 
     // parent
@@ -971,7 +909,7 @@ int main(int argc, char *argv[]){
                         write(fdp2c[0][1], input, 900*sizeof(char));
 //                        write(fdp2c[1][1], input, 900*sizeof(char));
 //                        write(fdp2c[2][1], input, 900*sizeof(char));
-                        printf(">>>>>> Your request has been accepted.\n");
+                        printf(">>>>>> Your request has been recorded.\n");
 
 //                      TODO
 //                      Create meeting? Answering: I think I'll pass the command for algo process to create meeting,
@@ -981,9 +919,7 @@ int main(int argc, char *argv[]){
 //                        meetingsCount++;
 //                        printf("meeting format is %d, %d, %d, %d\n", meetings[meetingsCount-1].teamsIndex, meetings[meetingsCount-1].date, meetings[meetingsCount-1].startTime, meetings[meetingsCount-1].duration);
                     }
-                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 1)
-                        printf(">>>>>> Your request has been rejected.\n");
-                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 2)
+                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == -1)
                         printf(">>>>>> Your request is invalid.\n");
                 }
                 else{ // input for 2b. Batch input
@@ -1009,7 +945,7 @@ int main(int argc, char *argv[]){
 
                         // check the validity of the request. 0 is valid
                         if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 0) {
-                            printf(">>>>>> Line %d request has been accepted.\n\n", lineNum);
+                            printf(">>>>>> Line %d request has been recorded.\n\n", lineNum);
                             // stores command for algo process
                             strcpy(command[0], "2a");
                             strcpy(command[1], batchInput[0]);
@@ -1028,9 +964,7 @@ int main(int argc, char *argv[]){
 //                        meetingsCount++;
 //                        printf("meeting format is %d, %d, %d, %d\n", meetings[meetingsCount-1].teamsIndex, meetings[meetingsCount-1].date, meetings[meetingsCount-1].startTime, meetings[meetingsCount-1].duration);
                         }
-                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 1)
-                            printf(">>>>>> Line %d request has been rejected.\n\n", lineNum);
-                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == 2)
+                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == -1)
                             printf(">>>>>> Line %d request is invalid.\n\n", lineNum);
                     }
                     fclose(batchFile);
