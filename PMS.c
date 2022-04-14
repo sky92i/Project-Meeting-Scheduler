@@ -164,9 +164,7 @@ void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meetin
     }
 }
 
-char FilledSlot[1000][10];
-int FilledSlotCount = 0;
-
+// check request validity
 int checkRequest(int teamsCount, team teams[], char input1[], char input2[], char input3[], char input4[]){
     //printf("%d\n", teamsCount);
     //printf("%s %s %s %s\n", input1, input2, input3, input4);
