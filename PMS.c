@@ -172,7 +172,8 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
 
     // check team existence
     int exist = 0;
-    for (int x = 0; x < teamsCount; x++){
+    int x;
+    for (x = 0; x < teamsCount; x++){
         //printf("%s %s\n", &teams[x].team[5], &input1[5]);
         if (strcmp(&teams[x].team[5], &input1[5]) == 0 && &teams[x].team[5] != 0){
             exist = 1;
@@ -925,7 +926,7 @@ int main(int argc, char *argv[]){
                     batchFile = fopen(input[1],"r");
                     if (batchFile == NULL){
                         printf("Error in opening input file\n");
-                        exit(1);
+                        break;
                     }
                     int lineNum = 0;
                     while (fgets(batchBuf, 80, batchFile) != NULL){ // read batch input line by line
