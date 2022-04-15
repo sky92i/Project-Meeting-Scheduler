@@ -5,6 +5,10 @@
 #include <string.h>
 #include <sys/wait.h>
 
+#define NUM_STAFF 8 // number of staff
+#define NUM_APR_DATE 6 // number of dates in April
+#define NUM_MAY_DATE 12 // number of dates in May
+
 // objects
 typedef struct {
     char team[21];
@@ -35,27 +39,27 @@ team teams[20] = {0};
 int fdp2c[4][2]; // parent -> child pipes
 int fdc2p[4][2]; // child -> parent pipes
 char *staff[] = {"Alan", "Billy", "Cathy", "David", "Eva", "Fanny", "Gary", "Helen"};
-int managerCount[8] = {0};
-int memberCount[8] = {0};
-int staffCount = 8, slotsCount = 0, meetingsCount = 0, teamsCount = 0;
+int managerCount[NUM_STAFF] = {0};
+int memberCount[NUM_STAFF] = {0};
+int staffCount = NUM_STAFF, slotsCount = 0, meetingsCount = 0, teamsCount = 0;
 int validDates[] = {25, 26, 27, 28, 29, 30, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14};
 
 int numberOfRejects = 0; // (FCFS)
-meeting acceptedMeetingsApr[8][100] = {0}; // "8" stands for the number of staff members (FCFS)
-meeting acceptedMeetingsMay[8][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning (FCFS)
-meeting acceptedMeetingsInorder[8][200] = {0}; // combined of the meetings in both months, sorted by date and start time (FCFS)
-int numAcceptedMeetingsApr[8] = {0}; // number of meetings accepted for each member (FCFS)
-int numAcceptedMeetingsMay[8] = {0}; // (FCFS)
+meeting acceptedMeetingsApr[NUM_STAFF][100] = {0}; // "8" stands for the number of staff members (FCFS)
+meeting acceptedMeetingsMay[NUM_STAFF][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning (FCFS)
+meeting acceptedMeetingsInorder[NUM_STAFF][200] = {0}; // combined of the meetings in both months, sorted by date and start time (FCFS)
+int numAcceptedMeetingsApr[NUM_STAFF] = {0}; // number of meetings accepted for each member (FCFS)
+int numAcceptedMeetingsMay[NUM_STAFF] = {0}; // (FCFS)
 int rejectedMeetingIndex[200] = {-1}; // (FCFS)
 meeting rejectedMeetingsApr[100] = {0}; // (FCFS)
 meeting rejectedMeetingsMay[100] = {0}; // (FCFS)
 meeting rejectedMeetings[200] = {0}; // (FCFS)
 int numRejectedMeetingsApr = 0; // (FCFS)
 int numRejectedMeetingsMay = 0; // (FCFS)
-int apr[6][8][9] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
-int may[12][8][9] = {0}; // totally 12 working days in May
-int meetingHoursApr[6][8] = {0}; // humane criteria, recording the meeting hours of each member each day, 6 days in April
-int meetingHoursMay[12][8] = {0}; // 12 days in May
+int apr[NUM_APR_DATE][NUM_STAFF][9] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
+int may[NUM_MAY_DATE][NUM_STAFF][9] = {0}; // totally 12 working days in May
+int meetingHoursApr[NUM_APR_DATE][NUM_STAFF] = {0}; // humane criteria, recording the meeting hours of each member each day, 6 days in April
+int meetingHoursMay[NUM_MAY_DATE][NUM_STAFF] = {0}; // 12 days in May
 
 // constructors
 int creatTeam(team teams[], int index, int managerCount[], int memberCount[], char *team, char *project, int managerIndex, int memberAIndex, int memberBIndex, int memberCIndex){
@@ -215,6 +219,51 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
         return -1;
     }
     return 0;
+}
+
+int searchValidDataIndex(int validDate)
+{
+    int i;
+    for (i = 0; i < NUM_APR_DATE+NUM_MAY_DATE; i++)
+    {
+        if (validDate == validDates[i])
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int printScheduleCmmdCheck(char startDate[], char endDate[]) // to ensure the start date is less than the end date, if else reject the command
+{
+    int start = atoi(startDate); // convert to int
+    int end;
+    if (endDate[0] == '0') // convert to int
+    {
+        end = endDate[1] - '0';
+    }
+    else
+    {
+        end = atoi(endDate);
+    }
+    int startIndex = searchValidDataIndex(start);
+    int endIndex = searchValidDataIndex(end);
+    if (startIndex == -1)
+    {
+        printf("The start date is not valid.\n");
+        return 0;
+    }
+    if (endIndex == -1)
+    {
+        printf("The end date is not valid.\n");
+        return 0;
+    }
+    if (startIndex > endIndex)
+    {
+        printf("The start date cannot be greater than the end date. Schedule request rejected.\n");
+        return 0;
+    }
+    return 1;
 }
 
 void FCFS() // only to be called by FCFS child
@@ -1018,11 +1067,14 @@ int main(int argc, char *argv[]){
 
                 // TODO sends command in array, e.g. input:"3a FCFS 2022-04-25 2022-04-27"; in form:"3 FCFS 25 27" to FCFS process
                 // send command to corresponding algo process to pass output information to output process
-                if (strcmp(input[0], "3a") == 0) {
-                    write(fdp2c[0][1], command, 900 * sizeof(char));
-                }
-                else if (strcmp(input[0], "3b") == 0) {
-                    write(fdp2c[1][1], command, 900 * sizeof(char));
+                if (printScheduleCmmdCheck(command[2], command[3]))
+                {
+                    if (strcmp(input[0], "3a") == 0) {
+                        write(fdp2c[0][1], command, 900 * sizeof(char));
+                    }
+                    else if (strcmp(input[0], "3b") == 0) {
+                        write(fdp2c[1][1], command, 900 * sizeof(char));
+                    }
                 }
                 // TODO print schedule
                 printf(">>>>>> Printed. Export file name: Schedule_FCFS_01.txt.\n");
