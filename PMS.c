@@ -305,6 +305,7 @@ void FCFS() // only to be called by FCFS child
             // recvCmmd[2] = "start date"
             // recvCmmd[3] = "end date"
         {
+            int fcfs = 1;
             int i;
             char currentTeam[21];
             int date;
@@ -588,9 +589,19 @@ void FCFS() // only to be called by FCFS child
             sortMeetings(rejectedMeetingsMay, numRejectedMeetingsMay);
             mergeAprMay(rejectedMeetings, rejectedMeetingsApr, rejectedMeetingsMay, numRejectedMeetingsApr, numRejectedMeetingsMay);
             // TODO: print the schedule to a txt file
+            char fname[] = "Schedule_FCFS_";     //deal with the file names
+            char buf[5];
+            sprintf(buf, "%d", fcfs);
+            if (fcfs < 10){ strcat(fname, "0"); strcat(fname, buf); }
+            else { strcat(fname, "_"); strcat(fname, buf); }
+            fcfs++;
+            strcat(fname, ".txt");
+            FILE *file;
+            file  = fopen(fname, "w");     //create a file with name
+            printf(">>>>>> Printed. Export file name: %s.\n", fname);
             // printing on terminal, for testing, temporary codes
-            printf("*** Project Meeting ***\n\n");
-            printf("Algorithm used: FCFS\n");
+            printf("*** Project Meeting ***\n\n");  fprintf(file, "*** Project Meeting ***\n\n");
+            printf("Algorithm used: FCFS\n");       fprintf(file, "Algorithm used: FCFS\n");
             int startMonth;
             int endMonth;
             if (startDate >= 25 && startDate <= 30)
@@ -626,11 +637,14 @@ void FCFS() // only to be called by FCFS child
                 strcat(stringEndDate, dummStr);
             }
             printf("Period: 2022-0%d-%s to 2022-0%d-%s\n", startMonth, stringStartDate, endMonth, stringEndDate);
+            fprintf(file, "Period: 2022-0%d-%s to 2022-0%d-%s\n", startMonth, stringStartDate, endMonth, stringEndDate);
             for (i = 0; i < 8; i++) // 8 staff members
             {
                 int j;
                 printf("Date\t\t\tStart\t\tEnd\t\t\tTeam\t\t\tProject\n");
+                fprintf(file, "Date\t\t\tStart\t\tEnd\t\t\tTeam\t\t\tProject\n");
                 printf("==================================================================================\n");
+                fprintf(file, "==================================================================================\n");
                 for (j = startDateIndex; j < endDateIndex+1; j++)
                 {
                     int k;
@@ -677,17 +691,21 @@ void FCFS() // only to be called by FCFS child
                         strcat(stringEndTime, dummyTime);
                         strcat(stringEndTime, ":00"); // string end time ok, to be printed
                         printf("%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
+                        fprintf(file, "%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
                     }
                 }
                 printf("==================================================================================\n");
+                fprintf(file, "==================================================================================\n");
                 printf("Staff: %s\n\n\n",staff[i]);
-
+                fprintf(file, "Staff: %s\n\n\n",staff[i]);
             }
-            printf("\t\t\t\t\t\t\t\t\t- End -\n");
+            printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             // rejected meetings
-            printf("\n\n*** Meeting Request - REJECTED ***\n\n");
+            printf("\n\n*** Meeting Request - REJECTED ***\n\n"); fprintf(file, "\n\n*** Meeting Request - REJECTED ***\n\n");
             printf("There are %d requests rejected for the required period.\n", numberOfRejects);
+            fprintf(file, "There are %d requests rejected for the required period.\n", numberOfRejects);
             printf("==================================================================================\n");
+            fprintf(file, "==================================================================================\n");
             for (i = startDateIndex; i < endDateIndex+1; i++)
             {
                 int j;
@@ -725,9 +743,12 @@ void FCFS() // only to be called by FCFS child
                     strcat(stringStartTime, dummyTime);
                     strcat(stringStartTime, ":00"); // string start time ok, to be printed
                     printf("%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
+                    fprintf(file, "%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
                 }
             }
             printf("==================================================================================\n");
+            fprintf(file, "==================================================================================\n");
+            fclose(file);
             clearSchedule();
         }
         else if (strcmp(recvCmmd[0], "end") == 0)
@@ -806,7 +827,6 @@ int main(int argc, char *argv[]){
         close(fdc2p[1][1]);
         exit(0);
     }
-
     if (fork() == 0){ // Rescheduling algorithm
         close(fdp2c[2][1]); // close fd[1] (output) in child side for parent -> child
         close(fdc2p[2][0]); // close fd[0] (input) in child side for child -> parent
@@ -824,7 +844,6 @@ int main(int argc, char *argv[]){
         close(fdc2p[2][1]);
         exit(0);
     }
-
     if (fork() == 0){ // Output
         close(fdp2c[3][1]); // close fd[1] (output) in child side for parent -> child
         close(fdc2p[3][0]); // close fd[0] (input) in child side for child -> parent
@@ -1077,7 +1096,6 @@ int main(int argc, char *argv[]){
                     }
                 }
                 // TODO print schedule
-                printf(">>>>>> Printed. Export file name: Schedule_FCFS_01.txt.\n");
             }
             memset(input, 0, sizeof(input)); // clear previous input
             memset(command, 0, sizeof(command)); // clear previous command
