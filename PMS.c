@@ -188,8 +188,8 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
     // check date
     char april[] = "2022-04-";
     char may[] = "2022-05-";
-    if( (strncmp(input2, april, 8) == 0 && (atoi(&input2[8]) < 25 || atoi(&input2[8]) > 31)) || 
-        (strncmp(input2, may, 8) == 0 && (atoi(&input2[8]) < 1 || atoi(&input2[8]) > 14))  || 
+    if( (strncmp(input2, april, 8) == 0 && (atoi(&input2[8]) < 25 || atoi(&input2[8]) > 31)) ||
+        (strncmp(input2, may, 8) == 0 && (atoi(&input2[8]) < 1 || atoi(&input2[8]) > 14))  ||
         (strncmp(input2, april, 8) != 0 && strncmp(input2, may, 8) != 0) ) {
         printf("Invalid date. The valid meeting date is from 2022-04-25 to 2022-05-14.\n");
         return -1;
@@ -198,7 +198,7 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
         printf("Invalid date. Sunday is not a working day.\n");
         return -1;
     }
-    
+
     // check time
     if (atoi(&input3[0]) < 9 || atoi(&input3[0]) > 18){
         printf("Invalid time. The valid meeting time is from 09:00 to 18:00.\n");
@@ -266,6 +266,10 @@ void FCFS() // only to be called by FCFS child
             int startDateIndex; // referring to the array validDates[]
             int endDate = atoi(recvCmmd[3]);
             int endDateIndex;
+            char stringStartDate[4];
+            char stringEndDate[4];
+            memset(stringStartDate, 0, 4 * sizeof(char));
+            memset(stringEndDate, 0, 4 * sizeof(char)); // clearing string of the last processing, avoid confusing
             // date adjustment
             if (startDate < 25 && startDate > 14)
             {
@@ -540,8 +544,6 @@ void FCFS() // only to be called by FCFS child
             printf("Algorithm used: FCFS\n");
             int startMonth;
             int endMonth;
-            char stringStartDate[4];
-            char stringEndDate[4];
             if (startDate >= 25 && startDate <= 30)
             {
                 startMonth = 4;
@@ -550,7 +552,10 @@ void FCFS() // only to be called by FCFS child
             else
             {
                 startMonth = 5;
-                strcpy(stringStartDate, "0");
+                if (startDate >= 2 && startDate <= 9)
+                {
+                    strcpy(stringStartDate, "0");
+                }
                 char dummyStr[3];
                 sprintf(dummyStr, "%d", startDate);
                 strcat(stringStartDate,dummyStr);
@@ -563,7 +568,10 @@ void FCFS() // only to be called by FCFS child
             else
             {
                 endMonth = 5;
-                strcpy(stringEndDate, "0");
+                if (endDate >= 2 && endDate <= 9)
+                {
+                    strcpy(stringEndDate, "0");
+                }
                 char dummStr[3];
                 sprintf(dummStr, "%d", endDate);
                 strcat(stringEndDate, dummStr);
@@ -601,6 +609,10 @@ void FCFS() // only to be called by FCFS child
                         else // may
                         {
                             strcpy(dummyDate, "05-");
+                            if (currentDate >= 2 && currentDate <= 9)
+                            {
+                                strcat(dummyDate, "0");
+                            }
                         }
                         sprintf(dummyDate2, "%d", currentDate);
                         strcat(dummyDate, dummyDate2);
@@ -951,7 +963,7 @@ int main(int argc, char *argv[]){
                             strcpy(command[2], batchInput[1]);
                             strcpy(command[3], batchInput[2]);
                             strcpy(command[4], batchInput[3]);
-                            // TODO sends command in array to FCFS, XXXX, rescheduling process; in form:"2a Team_A 2022-04-25 09:00"
+                            // TODO sends command in array to FCFS, XXXX, rescheduling process; in form:"2a Team_A 2022-04-25 09:00 2"
                             // sends command in array to FCFS, XXXX, rescheduling process by
                             write(fdp2c[0][1], command, 900*sizeof(char));
 //                            write(fdp2c[1][1], command, 900*sizeof(char));
