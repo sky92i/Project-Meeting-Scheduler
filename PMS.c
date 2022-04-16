@@ -335,7 +335,7 @@ void scheduleAndPrint() // only to be called by children
             // recvCmmd[2] = "start date"
             // recvCmmd[3] = "end date"
         {
-            int fcfs = 1;
+            int fcfs = 1; int prio = 1; FILE *file;
             int i;
             char currentTeam[21];
             int date;
@@ -392,11 +392,30 @@ void scheduleAndPrint() // only to be called by children
             if (strcmp(recvCmmd[1], "PRIO") == 0) // if the selected algo is PRIO
             {
                 prioSortMeetings(recvMeetings, meetings);
+                char fname[] = "Schedule_PRIO_";     //deal with the file name
+                char buf[5];
+                sprintf(buf, "%d", prio);
+                if (prio < 10){ strcat(fname, "0"); }
+                strcat(fname, buf); 
+                prio++;
+                strcat(fname, ".txt");
+                file  = fopen(fname, "w");     //create a file with name
+                printf(">>>>>> Printed. Export file name: %s.\n", fname);
             }
             else if (strcmp(recvCmmd[1], "FCFS") == 0)
             {
                 memcpy(meetings, recvMeetings, sizeof(recvMeetings));
+                char fname[] = "Schedule_FCFS_";     //deal with the file name
+                char buf[5];
+                sprintf(buf, "%d", fcfs);
+                if (fcfs < 10){ strcat(fname, "0"); }
+                strcat(fname, buf); 
+                fcfs++;
+                strcat(fname, ".txt");
+                file  = fopen(fname, "w");     //create a file with name
+                printf(">>>>>> Printed. Export file name: %s.\n", fname);
             }
+            
             for (i = 0; i < meetingsCount; i++)
             {
                 int j, k;
@@ -628,16 +647,6 @@ void scheduleAndPrint() // only to be called by children
             sortMeetings(rejectedMeetingsMay, numRejectedMeetingsMay);
             mergeAprMay(rejectedMeetings, rejectedMeetingsApr, rejectedMeetingsMay, numRejectedMeetingsApr, numRejectedMeetingsMay);
             // TODO: print the schedule to a txt file
-            char fname[] = "Schedule_FCFS_";     //deal with the file names
-            char buf[5];
-            sprintf(buf, "%d", fcfs);
-            if (fcfs < 10){ strcat(fname, "0"); strcat(fname, buf); }
-            else { strcat(fname, "_"); strcat(fname, buf); }
-            fcfs++;
-            strcat(fname, ".txt");
-            FILE *file;
-            file  = fopen(fname, "w");     //create a file with name
-            printf(">>>>>> Printed. Export file name: %s.\n", fname);
             // printing on terminal, for testing, temporary codes
             printf("*** Project Meeting ***\n\n");  fprintf(file, "*** Project Meeting ***\n\n");
             printf("Algorithm used: %s\n", recvCmmd[1]);    fprintf(file, "Algorithm used: %s\n", recvCmmd[1]);
