@@ -640,7 +640,7 @@ void scheduleAndPrint() // only to be called by children
             printf(">>>>>> Printed. Export file name: %s.\n", fname);
             // printing on terminal, for testing, temporary codes
             printf("*** Project Meeting ***\n\n");  fprintf(file, "*** Project Meeting ***\n\n");
-            printf("Algorithm used: %s\n", recvCmmd[1]);    fprintf(file, "Algorithm used: %s\n", recvCmmd);
+            printf("Algorithm used: %s\n", recvCmmd[1]);    fprintf(file, "Algorithm used: %s\n", recvCmmd[1]);
             int startMonth;
             int endMonth;
             if (startDate >= 25 && startDate <= 30)
