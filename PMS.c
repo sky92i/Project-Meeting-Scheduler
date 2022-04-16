@@ -8,6 +8,7 @@
 #define NUM_STAFF 8 // number of staff
 #define NUM_APR_DATE 6 // number of dates in April
 #define NUM_MAY_DATE 12 // number of dates in May
+#define WORK_HR 9 // working hours per day
 
 // objects
 typedef struct {
@@ -34,7 +35,8 @@ typedef struct {
     char *projectName[20];
 }slot;
 
-meeting meetings[200] = {0};
+meeting recvMeetings[200] = {0}; // in child process, this array is used to receive all meeting requests (raw data)
+meeting meetings[200] = {0}; // in child process, this array is used to handle scheduling
 team teams[20] = {0};
 int fdp2c[4][2]; // parent -> child pipes
 int fdc2p[4][2]; // child -> parent pipes
@@ -49,15 +51,15 @@ meeting acceptedMeetingsApr[NUM_STAFF][100] = {0}; // "8" stands for the number 
 meeting acceptedMeetingsMay[NUM_STAFF][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning (FCFS)
 meeting acceptedMeetingsInorder[NUM_STAFF][200] = {0}; // combined of the meetings in both months, sorted by date and start time (FCFS)
 int numAcceptedMeetingsApr[NUM_STAFF] = {0}; // number of meetings accepted for each member (FCFS)
-int numAcceptedMeetingsMay[NUM_STAFF] = {0}; // (FCFS)
-int rejectedMeetingIndex[200] = {-1}; // (FCFS)
-meeting rejectedMeetingsApr[100] = {0}; // (FCFS)
-meeting rejectedMeetingsMay[100] = {0}; // (FCFS)
-meeting rejectedMeetings[200] = {0}; // (FCFS)
-int numRejectedMeetingsApr = 0; // (FCFS)
-int numRejectedMeetingsMay = 0; // (FCFS)
-int apr[NUM_APR_DATE][NUM_STAFF][9] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
-int may[NUM_MAY_DATE][NUM_STAFF][9] = {0}; // totally 12 working days in May
+int numAcceptedMeetingsMay[NUM_STAFF] = {0}; // children
+int rejectedMeetingIndex[200] = {-1}; // children
+meeting rejectedMeetingsApr[100] = {0}; // children
+meeting rejectedMeetingsMay[100] = {0}; // children
+meeting rejectedMeetings[200] = {0}; // children
+int numRejectedMeetingsApr = 0; // children
+int numRejectedMeetingsMay = 0; // children
+int apr[NUM_APR_DATE][NUM_STAFF][WORK_HR] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
+int may[NUM_MAY_DATE][NUM_STAFF][WORK_HR] = {0}; // totally 12 working days in May
 int meetingHoursApr[NUM_APR_DATE][NUM_STAFF] = {0}; // humane criteria, recording the meeting hours of each member each day, 6 days in April
 int meetingHoursMay[NUM_MAY_DATE][NUM_STAFF] = {0}; // 12 days in May
 
@@ -98,7 +100,7 @@ int createMeeting(meeting meetings[], int meetingsCount, team teams[], int teams
 
 }
 
-int searchStaffIndex(char *input) // updated
+int searchStaffIndex(char *input)
 {
     int i;
     for (i = 0; i < staffCount; i++)
@@ -108,8 +110,7 @@ int searchStaffIndex(char *input) // updated
     return -1;
 }
 
-void clearSchedule() // should be called by FCFS after printing schedule every time, avoid mixing the data with next schedule command
-// updated
+void clearSchedule() // should be called by children after printing schedule every time, avoid mixing the data with next schedule command
 {
     numberOfRejects = 0;
     memset(acceptedMeetingsApr, 0, 800 * sizeof(meeting));
@@ -123,38 +124,38 @@ void clearSchedule() // should be called by FCFS after printing schedule every t
     memset(rejectedMeetings, 0, 200 * sizeof(meeting));
     numRejectedMeetingsApr = 0;
     numRejectedMeetingsMay = 0;
-    memset(apr, 0, 6*8*9*sizeof(int));
-    memset(may, 0, 12*8*9* sizeof(int));
-    memset(meetingHoursApr, 0, 48 * sizeof(int));
-    memset(meetingHoursMay, 0, 96 * sizeof(int));
+    memset(apr, 0, NUM_APR_DATE * NUM_STAFF * WORK_HR *sizeof(int));
+    memset(may, 0, NUM_MAY_DATE * NUM_STAFF * WORK_HR * sizeof(int));
+    memset(meetingHoursApr, 0, NUM_APR_DATE * NUM_STAFF * sizeof(int));
+    memset(meetingHoursMay, 0, NUM_MAY_DATE * NUM_STAFF * sizeof(int));
 }
 
-void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings) // updated
+void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings)
 {
-    int minInex, i, j;
+    int minIndex, i, j;
     for (i = 0; i < numberOfMeetings - 1; i++)
     {
-        minInex = i;
+        minIndex = i;
         for (j = i + 1; j < numberOfMeetings; j++)
         {
-            if (    (unsortedMeetings[j].date < unsortedMeetings[minInex].date) || // if the date of the first meeting is less than the second one's
-                    (unsortedMeetings[j].date == unsortedMeetings[minInex].date && unsortedMeetings[j].startTime < unsortedMeetings[minInex].startTime)) // if they are on the same day, compare their start time
+            if (    (unsortedMeetings[j].date < unsortedMeetings[minIndex].date) || // if the date of the first meeting is less than the second one's
+                    (unsortedMeetings[j].date == unsortedMeetings[minIndex].date && unsortedMeetings[j].startTime < unsortedMeetings[minIndex].startTime)) // if they are on the same day, compare their start time
             {
-                minInex = j;
+                minIndex = j;
             }
         }
-        if (minInex != i)
+        if (minIndex != i)
         {
             // swapping of two meetings
             meeting dummy;
-            memcpy(&dummy, &unsortedMeetings[minInex], sizeof(meeting));
-            memcpy(&unsortedMeetings[minInex], &unsortedMeetings[i], sizeof(meeting));
+            memcpy(&dummy, &unsortedMeetings[minIndex], sizeof(meeting));
+            memcpy(&unsortedMeetings[minIndex], &unsortedMeetings[i], sizeof(meeting));
             memcpy(&unsortedMeetings[i], &dummy, sizeof(meeting));
         }
     }
 }
 
-void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meeting sortedMeetingsInMay[], int numberOfMeetingsInApr, int numberOfMeetingsInMay) // updated
+void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meeting sortedMeetingsInMay[], int numberOfMeetingsInApr, int numberOfMeetingsInMay)
 {
     int i;
     // meetings in April are put first
@@ -165,6 +166,35 @@ void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meetin
     for (i = 0; i < numberOfMeetingsInMay; i++)
     {
         memcpy(&mergedMeetings[i+numberOfMeetingsInApr], &sortedMeetingsInMay[i], sizeof(meeting));
+    }
+}
+
+void prioSortMeetings(meeting original[], meeting prioSortedMeetings[]) // priority sorting, the meetings of the team with the smaller alphabet as the team name have higher priority, e.g. the meetings of Team_A should always have higher priority than that of Team_B
+// assume that all the team names are in the format of "Team_*", and "*" is the single alphabet in uppercase
+// stable sorting
+{
+    memcpy(prioSortedMeetings, original, sizeof(meetings));
+    int minIndex, i, j;
+    for (i = 0; i < meetingsCount - 1; i++)
+    {
+        minIndex = i;
+        for (j = i + 1; j < meetingsCount; j++)
+        {
+            char alphabet1 = teams[prioSortedMeetings[minIndex].teamsIndex].team[5];
+            char alphabet2 = teams[prioSortedMeetings[j].teamsIndex].team[5];
+            if(alphabet1 > alphabet2) // in ASCII, e.g., 'A' < 'B', but 'A' should have higher priority
+            {
+                minIndex = j;
+            }
+        }
+        if (minIndex != i)
+        {
+            // swap
+            meeting dummy;
+            memcpy(&dummy, &prioSortedMeetings[minIndex], sizeof(meeting));
+            memcpy(&prioSortedMeetings[minIndex], &prioSortedMeetings[i], sizeof(meeting));
+            memcpy(&prioSortedMeetings[i], &dummy, sizeof(meeting));
+        }
     }
 }
 
@@ -266,7 +296,7 @@ int printScheduleCmmdCheck(char startDate[], char endDate[]) // to ensure the st
     return 1;
 }
 
-void FCFS() // only to be called by FCFS child
+void scheduleAndPrint() // only to be called by children
 {
     char recvCmmd[30][30]; // received command
     // only the meetings between 25/4 to 14/5 will be considered valid
@@ -295,13 +325,13 @@ void FCFS() // only to be called by FCFS child
             // recvCmmd[2] = "2022-04-25" (date)
             // recvCmmd[3] = "09:00" (time)
         {
-            createMeeting(meetings, meetingsCount, teams, teamsCount, recvCmmd[1], recvCmmd[2], recvCmmd[3],
+            createMeeting(recvMeetings, meetingsCount, teams, teamsCount, recvCmmd[1], recvCmmd[2], recvCmmd[3],
                           recvCmmd[4]);
             meetingsCount++;
         }
         else if (strcmp(recvCmmd[0], "3") == 0) // print meeting schedule
             // recvCmmd[0] = "3"
-            // recvCmmd[1] = "FCFS"
+            // recvCmmd[1] = "FCFS" or "PRIO"
             // recvCmmd[2] = "start date"
             // recvCmmd[3] = "end date"
         {
@@ -356,7 +386,16 @@ void FCFS() // only to be called by FCFS child
             if (startDate > endDate)
             {
                 printf("Error: the start date is greater than the end date\n");
+                continue;
                 // should not be run
+            }
+            if (strcmp(recvCmmd[1], "PRIO") == 0) // if the selected algo is PRIO
+            {
+                prioSortMeetings(recvMeetings, meetings);
+            }
+            else if (strcmp(recvCmmd[1], "FCFS") == 0)
+            {
+                memcpy(meetings, recvMeetings, sizeof(recvMeetings));
             }
             for (i = 0; i < meetingsCount; i++)
             {
@@ -374,7 +413,7 @@ void FCFS() // only to be called by FCFS child
                 if (date >= 25 && date <= 30) // in April
                 {
                     int dateIndex = date - 25; // offset: 25 --> 0, 26 --> 1, ... , 30 --> 5
-                    int timeIndex = startTime - 9; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time be 1800
+                    int timeIndex = startTime - 9; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time to be 1800
                     for (k = 0; k < 8; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
                     {
                         if ((duration + meetingHoursApr[dateIndex][k]) > 5)
@@ -566,7 +605,7 @@ void FCFS() // only to be called by FCFS child
                 }
             }
             // start to sort meetings, based on date and start time, merge all sorted meetings into one array finally
-            for (i = 0; i < 8; i++) // 8 staff members in total
+            for (i = 0; i < NUM_STAFF; i++) // 8 staff members in total
             {
                 sortMeetings(acceptedMeetingsApr[i],numAcceptedMeetingsApr[i]); // meetings in April
                 sortMeetings(acceptedMeetingsMay[i],numAcceptedMeetingsMay[i]); // meetings in May
@@ -601,7 +640,7 @@ void FCFS() // only to be called by FCFS child
             printf(">>>>>> Printed. Export file name: %s.\n", fname);
             // printing on terminal, for testing, temporary codes
             printf("*** Project Meeting ***\n\n");  fprintf(file, "*** Project Meeting ***\n\n");
-            printf("Algorithm used: FCFS\n");       fprintf(file, "Algorithm used: FCFS\n");
+            printf("Algorithm used: %s\n", recvCmmd[1]);    fprintf(file, "Algorithm used: %s\n", recvCmmd);
             int startMonth;
             int endMonth;
             if (startDate >= 25 && startDate <= 30)
@@ -803,8 +842,8 @@ int main(int argc, char *argv[]){
                 close(fdc2p[i][1]);
             }
         }
-        FCFS();
-        printf("This is child process for FCFS (finished)\n");
+        scheduleAndPrint();
+        printf("Child process finished.\n");
         close(fdp2c[0][0]);
         close(fdc2p[0][1]);
         exit(0);
@@ -880,7 +919,7 @@ int main(int argc, char *argv[]){
     //"    2c.  Meeting Attendance\n\n"};               (if implemented)
     char *cmd3 = {"\n3,  Print Meeting Schedule\n"
                   "    3a. FCFS (First Come First Served)\n"
-                  "    3b. XXXX (Another algorithm implemented)\n"}; // TODO change XXXX
+                  "    3b. PRIO (Priority)\n"}; // TODO change XXXX
     //"    3c. YYYY (Attendance Report)\n\n"};           (if implemented)
     char *cmd4 = {"\n4.  Exit\n"};
     char* prompt = {"\nEnter an option: "};
@@ -1088,12 +1127,7 @@ int main(int argc, char *argv[]){
                 // send command to corresponding algo process to pass output information to output process
                 if (printScheduleCmmdCheck(command[2], command[3]))
                 {
-                    if (strcmp(input[0], "3a") == 0) {
-                        write(fdp2c[0][1], command, 900 * sizeof(char));
-                    }
-                    else if (strcmp(input[0], "3b") == 0) {
-                        write(fdp2c[1][1], command, 900 * sizeof(char));
-                    }
+                    write(fdp2c[0][1], command, 900 * sizeof(char));
                 }
                 // TODO print schedule
             }
@@ -1103,8 +1137,12 @@ int main(int argc, char *argv[]){
 
     } while (option != 4);
     fclose(log);
+
     strcpy(command[0], "end");
-    write(fdp2c[0][1], command, 900 * sizeof(char));
+    write(fdp2c[0][1], command, 900 * sizeof(char)); // send end msg to the child
+    wait(NULL); // wait the child
+    close(fdp2c[0][1]);
+    close(fdc2p[0][0]);
 
     // send signal to terminate child process
 //    strcpy(command[0], "4");
@@ -1112,12 +1150,12 @@ int main(int argc, char *argv[]){
 //        write(fdp2c[i][1], command, 900*sizeof(char));
 //    }
 
-    for (i = 0; i < 4; i ++){
-        pid = wait(NULL);
-        close(fdp2c[i][1]);
-        close(fdc2p[i][0]);
-        //printf("Collected 1 child, %d\n", pid);
-    }
+//    for (i = 0; i < 4; i ++){
+//        pid = wait(NULL);
+//        close(fdp2c[i][1]);
+//        close(fdc2p[i][0]);
+//        //printf("Collected 1 child, %d\n", pid);
+//    }
     printf("Exited successfully\n\n");
     return 0;
 }
