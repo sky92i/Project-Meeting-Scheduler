@@ -216,7 +216,7 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
         }
     }
     if(exist != 1) {
-        printf("Entered team does not exist.\n");
+        printf("[x] Entered team does not exist.\n");
         return -1;
     }
 
@@ -226,27 +226,27 @@ int checkRequest(int teamsCount, team teams[], char input1[], char input2[], cha
     if( (strncmp(input2, april, 8) == 0 && (atoi(&input2[8]) < 25 || atoi(&input2[8]) > 31)) ||
         (strncmp(input2, may, 8) == 0 && (atoi(&input2[8]) < 1 || atoi(&input2[8]) > 14))  ||
         (strncmp(input2, april, 8) != 0 && strncmp(input2, may, 8) != 0) ) {
-        printf("Invalid date. The valid meeting date is from 2022-04-25 to 2022-05-14.\n");
+        printf("[x] Invalid date. The valid meeting date is from 2022-04-25 to 2022-05-14.\n");
         return -1;
     }
     if(atoi(&input2[8]) == 1 || atoi(&input2[8]) == 8) {
-        printf("Invalid date. Sunday is not a working day.\n");
+        printf("[x] Invalid date. Sunday is not a working day.\n");
         return -1;
     }
 
     // check time
     if (atoi(&input3[0]) < 9 || atoi(&input3[0]) > 18){
-        printf("Invalid time. The valid meeting time is from 09:00 to 18:00.\n");
+        printf("[x] Invalid time. The valid meeting time is from 09:00 to 18:00.\n");
         return -1;
     }
 
     // check duration
     if (atoi(&input4[0]) < 1 || atoi(&input4[0]) > 9){
-        printf("Invalid duration. Duration cannot < 1 or > 9.\n");
+        printf("[x] Invalid duration. Duration cannot < 1 or > 9.\n");
         return -1;
     }
     if ((atoi(&input4[0]) + atoi(&input3[0])) > 18 ){
-        printf("Invalid duration. The end time is after 18:00.\n");
+        printf("[x] Invalid duration. The end time is after 18:00.\n");
         return -1;
     }
     return 0;
@@ -281,17 +281,17 @@ int printScheduleCmmdCheck(char startDate[], char endDate[]) // to ensure the st
     int endIndex = searchValidDataIndex(end);
     if (startIndex == -1)
     {
-        printf("The start date is not valid.\n");
+        printf("[x] The start date is not valid.\n");
         return 0;
     }
     if (endIndex == -1)
     {
-        printf("The end date is not valid.\n");
+        printf("[x] The end date is not valid.\n");
         return 0;
     }
     if (startIndex > endIndex)
     {
-        printf("The start date cannot be greater than the end date. Schedule request rejected.\n");
+        printf("[x] The start date cannot be greater than the end date. Schedule request rejected.\n");
         return 0;
     }
     return 1;
@@ -306,8 +306,8 @@ void scheduleAndPrint() // only to be called by children
     while (1) // until a quit message is received from the parent
     {
         read(fdp2c[0][0], recvCmmd, 900 * sizeof(char));
-        printf("(Child) Received from parent: %s, %s, %s, %s, %s, %s, %s\n", recvCmmd[0], recvCmmd[1], recvCmmd[2],
-               recvCmmd[3], recvCmmd[4], recvCmmd[5], recvCmmd[6]); // for debugging, showing what have been received
+        /*printf("(Child) Received from parent: %s, %s, %s, %s, %s, %s, %s\n", recvCmmd[0], recvCmmd[1], recvCmmd[2],
+               recvCmmd[3], recvCmmd[4], recvCmmd[5], recvCmmd[6]); // for debugging, showing what have been received*/
         if (strcmp(recvCmmd[0], "1") == 0)
         {
             int staffAindex = 0, staffBindex = 0, staffCindex = 0, staffDindex = 0;
@@ -401,7 +401,8 @@ void scheduleAndPrint() // only to be called by children
                 prio++;
                 strcat(fname, ".txt");
                 file  = fopen(fname, "w");     //create a file with name
-                printf(">>>>>> Printed. Export file name: %s.\n", fname);
+                system("clear");
+                printf(">>>>>> Printed. Export file name: %s.\n\n", fname);
             }
             else if (strcmp(recvCmmd[1], "FCFS") == 0)
             {
@@ -414,7 +415,8 @@ void scheduleAndPrint() // only to be called by children
                 fcfs++;
                 strcat(fname, ".txt");
                 file  = fopen(fname, "w");     //create a file with name
-                printf(">>>>>> Printed. Export file name: %s.\n", fname);
+                system("clear");
+                printf(">>>>>> Printed. Export file name: %s.\n\n", fname);
             }
             
             for (i = 0; i < meetingsCount; i++)
@@ -795,7 +797,7 @@ void scheduleAndPrint() // only to be called by children
                     fprintf(file, "%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
                 }
             }
-            printf("==================================================================================\n");
+            printf("==================================================================================\n\n");
             fprintf(file, "==================================================================================\n");
             fclose(file);
             clearSchedule();
@@ -905,9 +907,15 @@ int main(int argc, char *argv[]){
         int count = 0;
         char *tmp = NULL;
 
+        int printedCMD = 0;
+
         // Menu part 1 for option 1
         while(option == 1){
-            printf("%s", cmd1);
+            if(printedCMD == 0) {
+                system("clear");
+                printf("%s", cmd1);
+            }
+            printedCMD = 1;
             printf("Enter> ");
 
             // separate input by space
@@ -921,8 +929,9 @@ int main(int argc, char *argv[]){
                 tmp = strtok(NULL, " ");
             }
 
-            if (strlen(input[0]) == 1) { // if user inputs 0 to return main menu
+            if (strlen(input[0]) <= 1) { // if user inputs 0 to return main menu
                 option = atoi(input[0]);
+                continue;
             }
             else {
                 staffAindex = 0, staffBindex = 0, staffCindex = 0, staffDindex = 0;
@@ -937,13 +946,13 @@ int main(int argc, char *argv[]){
                     // sends command in array to scheduling process; in form:"1 Team_A Project_A Alan Cathy Fanny Helen"
                     strcpy(command[0], "1");
                     write(fdp2c[0][1], command, 900*sizeof(char));
-                    printf(">>>>>> Project %s is created.\n", input[0]);
+                    printf(">>>>>> Project %s is created.\n\n", input[0]);
                     teamsCount++;
                 }
                 else if (valid == -1)
-                    printf(">>>>>> Project %s is not created due to manager has exceed project limit.\n", input[0]);
+                    printf(">>>>>> Project %s is not created due to manager has exceed project limit.\n\n", input[0]);
                 else
-                    printf(">>>>>> Project %s is not created due to member has exceed project limit.\n", input[0]);
+                    printf(">>>>>> Project %s is not created due to member has exceed project limit.\n\n", input[0]);
             }
             memset(input, 0, sizeof(input)); // clear previous input
             memset(command, 0, sizeof(command)); // clear previous command
@@ -954,7 +963,11 @@ int main(int argc, char *argv[]){
         /* inputs in form of "option_input"
          * e.g. "2a Team_A 2022-04-25 09:00 2" for 2a. Single input */
         while(option == 2){
-            printf("%s", cmd2);
+            if(printedCMD == 0) {
+                system("clear");
+                printf("%s", cmd2);
+            }
+            printedCMD = 1;
             printf("Enter> ");
 
             // separate input by space
@@ -967,8 +980,9 @@ int main(int argc, char *argv[]){
                 tmp = strtok(NULL, " ");
             }
 
-            if (strlen(input[0]) == 1) { // if user inputs 0 to return main menu
+            if (strlen(input[0]) <= 1) { // if user inputs 0 to return main menu
                 option = atoi(input[0]);
+                continue;
             }
             else {
                 if (input[0][1] == 'a'){ // input for 2a. Single input
@@ -978,10 +992,9 @@ int main(int argc, char *argv[]){
                     if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == 0) {
                         // sends command in array to scheduling process; in form:"2a Team_A 2022-04-25 09:00 2"
                         write(fdp2c[0][1], input, 900*sizeof(char));
-                        printf(">>>>>> Your request has been recorded.\n");
+                        printf(">>>>>> Your request has been recorded.\n\n");
                     }
-                    else if(checkRequest(teamsCount, teams, input[1], input[2], input[3], input[4]) == -1)
-                        printf(">>>>>> Your request is invalid.\n");
+                    else printf(">>>>>> Your request is invalid.\n\n");
                 }
                 else{ // input for 2b. Batch input
                     // e.g. 2b batch01_Requests.dat for 2b input
@@ -1016,11 +1029,10 @@ int main(int argc, char *argv[]){
                             // sends command in array to scheduling process; in form:"2a Team_A 2022-04-25 09:00 2"
                             write(fdp2c[0][1], command, 900*sizeof(char));
                         }
-                        else if(checkRequest(teamsCount, teams, batchInput[0], batchInput[1], batchInput[2], batchInput[3]) == -1)
-                            printf(">>>>>> Line %d request is invalid.\n\n", lineNum);
+                        else printf(">>>>>> Line %d request is invalid.\n\n", lineNum);
                     }
                     fclose(batchFile);
-                    printf(">>>>>> Your batch request has been recorded.\n");
+                    printf(">>>>>> Your batch request has been recorded.\n\n");
 
                 }
             }
@@ -1032,8 +1044,17 @@ int main(int argc, char *argv[]){
         /* inputs in form of "option_input"
          * e.g. "3a FCFS 2022-04-25 2022-04-27" for 3a. FCFS (First Come First Served) */
         while(option == 3){
-            printf("%s", cmd3);
-            printf("Enter> ");
+            if(printedCMD == 0) {
+                system("clear");
+                printf("%s", cmd3);
+                printf("Enter> ");
+            }
+            if(printedCMD == 1) {
+                sleep(1);
+                printf("%s", cmd3);
+                printf("Enter> ");
+            }
+            printedCMD = 1;
 
             // separate input by space
             fgets(tmpInput, 80, stdin);
@@ -1045,8 +1066,9 @@ int main(int argc, char *argv[]){
                 tmp = strtok(NULL, " ");
             }
 
-            if (strlen(input[0]) == 1) { // if user inputs 0 to return main menu
+            if (strlen(input[0]) <= 1) { // if user inputs 0 to return main menu
                 option = atoi(input[0]);
+                continue;
             }
             else {
                 strcpy(command[0], "3");
