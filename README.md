@@ -40,4 +40,8 @@ Team_E Project_E Gary Alan
 2a Team_A 2022-04-25 17:00 2
 
 2b batch01_Requests.dat
+
+3a FCFS 2022-04-25 2022-04-27
+3a FCFS 2022-04-25 2022-05-14
+3b PRIO 2022-04-25 2022-04-27
 ```
