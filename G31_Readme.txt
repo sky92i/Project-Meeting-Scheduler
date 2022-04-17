@@ -7,7 +7,8 @@ Contents of file
 * Menu
 * Option 1 (Create Project Team)
 * Option 2 (Project Meeting booking)
-* option 3 (Print Meeting Schedule)
+* Option 3 (Print Meeting Schedule)
+* Option 4 (Exit)
 
 
 Duty
@@ -86,14 +87,20 @@ Option 3 (Print Meeting Schedule)
 ----------------------------------
 Under option 3, the user can print meeting schedule
 
-The user can enter 3a / 3b to indicate their meeting schedule by FCFS / XXXX
+The user can enter 3a / 3b to indicate their meeting schedule by FCFS (first come first serve) / PRIO (priority scheduling)
 Input is according to the following format:
 "3a FCFS Start_Year-Start_Month-Start_Day End_Year-End_Month-End_Day"
-"3b FCFS Start_Year-Start_Month-Start_Day End_Year-End_Month-End_Day"
+"3b PRIO Start_Year-Start_Month-Start_Day End_Year-End_Month-End_Day"
 Examples are "3a FCFS 2022-04-25 2022-04-27"
-& "3b XXXX 2022-04-25 2022-04-30"
+& "3b PRIO 2022-04-25 2022-04-30"
 
 The system will send an notice to indicate the output file name:
 Examples are ">>>>>> Printed. Export file name: Schedule_FCFS_01.txt."
 
 
+Option 4 (Exit)
+----------------------------------
+Under option 4, the user terminate the program and exit
+
+The system will output an string to show that it has successfully terminated
+"Exited successfully"
