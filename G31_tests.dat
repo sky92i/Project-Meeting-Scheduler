@@ -7,10 +7,12 @@ Team_E Project_E Gary Alan Billy
 
 
 // Invalid input for creating teams
-Team_F Project_F Alan David // manager in >1 project
+// manager in >1 project
+Team_F Project_F Alan David
 Team_G Project_h Eva Alan Gary Fanny
-Team_H Project_H David Helen Cathy Gary // member in >3 projects
 Team_I Project_I Gary Helen David
+// member in >3 projects
+Team_H Project_H David Helen Cathy Gary
 
 
 // Invalid input for creating meetings
