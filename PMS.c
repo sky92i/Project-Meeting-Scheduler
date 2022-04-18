@@ -384,7 +384,7 @@ void scheduleAndPrint() // only to be called by children
                     endDateIndex = i;
                 }
             }
-            if (startDate > endDate)
+            if (startDateIndex > endDateIndex)
             {
                 printf("Error: the start date is greater than the end date\n");
                 continue;
@@ -397,7 +397,7 @@ void scheduleAndPrint() // only to be called by children
                 char buf[5];
                 sprintf(buf, "%d", prio);
                 if (prio < 10){ strcat(fname, "0"); }
-                strcat(fname, buf); 
+                strcat(fname, buf);
                 prio++;
                 strcat(fname, ".txt");
                 file  = fopen(fname, "w");     //create a file with name
@@ -411,14 +411,14 @@ void scheduleAndPrint() // only to be called by children
                 char buf[5];
                 sprintf(buf, "%d", fcfs);
                 if (fcfs < 10){ strcat(fname, "0"); }
-                strcat(fname, buf); 
+                strcat(fname, buf);
                 fcfs++;
                 strcat(fname, ".txt");
                 file  = fopen(fname, "w");     //create a file with name
                 system("clear");
                 printf(">>>>>> Printed. Export file name: %s.\n\n", fname);
             }
-            
+
             for (i = 0; i < meetingsCount; i++)
             {
                 int j, k;
