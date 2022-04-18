@@ -1,0 +1,46 @@
+Team_A Project_A Alan Cathy Fanny Helen
+Team_B Project_B Cathy Helen
+Team_C Project_C Fanny Helen
+Team_D Project_D Eva Gary
+Team_E Project_E Gary Alan
+
+// Some invalid input for teams
+Team_F Project_F Alan David // manager in >1 project
+Team_G Project_h Eva Alan Gary Fanny
+Team_H Project_H David Helen Cathy Gary // member in >3 projects
+Team_I Project_I Gary Helen David
+
+2a Team_A 2022-04-25 09:00 2
+2a Team_A 2022-04-25 10:00 2
+2a Team_A 2022-04-25 11:00 2
+2a Team_B 2022-04-25 11:00 2
+2a Team_C 2022-04-25 12:00 1
+2a Team_D 2022-04-25 12:00 1
+2a Team_E 2022-04-25 12:00 1
+2a Team_A 2022-04-25 12:00 1
+
+
+2a Team_A 2022-04-24 09:00 2
+2a Team_A 2022-04-25 09:00 2
+2a Team_A 2022-04-32 09:00 2
+
+2a Team_A 2022-05-00 09:00 2
+2a Team_A 2022-05-01 09:00 2
+2a Team_A 2022-05-02 09:00 2
+2a Team_A 2022-05-08 09:00 2
+2a Team_A 2022-05-14 09:00 2
+2a Team_A 2022-05-15 09:00 2
+
+2a Team_A 2022-04-25 08:00 2
+2a Team_A 2022-04-25 19:00 2
+2a Team_A 2022-04-25 09:00 9
+2a Team_A 2022-04-25 09:00 10
+2a Team_A 2022-04-25 09:00 0
+2a Team_A 2022-04-25 18:00 2
+2a Team_A 2022-04-25 17:00 2
+
+2b batch01_Requests.dat
+
+3a FCFS 2022-04-25 2022-04-27
+3a FCFS 2022-04-25 2022-05-14
+3b PRIO 2022-04-25 2022-04-27
