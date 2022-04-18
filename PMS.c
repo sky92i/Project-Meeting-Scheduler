@@ -28,13 +28,6 @@ typedef struct {
     int duration;
 }meeting;
 
-// just an idea
-//typedef struct {
-//    int available; // initialized as boolean value (0/1) to check if available timeslot
-//    int teamsIndex; // index of the booked teams from teams array
-//    char *projectName[20];
-//}slot;
-
 meeting recvMeetings[200] = {0}; // in child process, this array is used to receive all meeting requests (raw data)
 meeting meetings[200] = {0}; // in child process, this array is used to handle scheduling
 team teams[20] = {0};
@@ -98,7 +91,6 @@ int createMeeting(meeting meetings[], int meetingsCount, team teams[], int teams
     meetings[meetingsCount].startTime = atoi(startTime);
     meetings[meetingsCount].duration = atoi(duration);
     return 1;
-
 }
 
 int searchStaffIndex(char *input)
@@ -205,7 +197,6 @@ void prioSortMeetings(meeting original[], meeting prioSortedMeetings[])
 int checkRequest(int teamsCount, team teams[], char input1[], char input2[], char input3[], char input4[]){
     //printf("%d\n", teamsCount);
     //printf("%s %s %s %s\n", input1, input2, input3, input4);
-    //printf("test: %d\n", atoi(&input2[8]));
 
     // check team existence
     int exist = 0;
@@ -395,13 +386,13 @@ void scheduleAndPrint() // only to be called by children
             if (strcmp(recvCmmd[1], "PRIO") == 0) // if the selected algo is PRIO
             {
                 prioSortMeetings(recvMeetings, meetings);
-                char fname[] = "Schedule_PRIO_";     //deal with the file name
+                char fname[] = "G31_PRIO_Schd_";     //deal with the file name
                 char buf[5];
                 sprintf(buf, "%d", prio);
                 if (prio < 10){ strcat(fname, "0"); }
                 strcat(fname, buf);
                 prio++;
-                strcat(fname, ".txt");
+                strcat(fname, ".dat");
                 file  = fopen(fname, "w");     //create a file with name
                 system("clear");
                 printf(">>>>>> Printed. Export file name: %s.\n\n", fname);
@@ -409,13 +400,13 @@ void scheduleAndPrint() // only to be called by children
             else if (strcmp(recvCmmd[1], "FCFS") == 0)
             {
                 memcpy(meetings, recvMeetings, sizeof(recvMeetings));
-                char fname[] = "Schedule_FCFS_";     //deal with the file name
+                char fname[] = "G31_FCFS_Schd_";     //deal with the file name
                 char buf[5];
                 sprintf(buf, "%d", fcfs);
                 if (fcfs < 10){ strcat(fname, "0"); }
                 strcat(fname, buf);
                 fcfs++;
-                strcat(fname, ".txt");
+                strcat(fname, ".dat");
                 file  = fopen(fname, "w");     //create a file with name
                 system("clear");
                 printf(">>>>>> Printed. Export file name: %s.\n\n", fname);
@@ -852,7 +843,7 @@ int main(int argc, char *argv[]){
             }
         }
         scheduleAndPrint();
-//        printf("Child process finished.\n");
+        // printf("Child process finished.\n");
         close(fdp2c[0][0]);
         close(fdc2p[0][1]);
         exit(0);
@@ -1095,19 +1086,6 @@ int main(int argc, char *argv[]){
     wait(NULL); // wait the child
     close(fdp2c[0][1]);
     close(fdc2p[0][0]);
-
-    // send signal to terminate child process
-//    strcpy(command[0], "4");
-//    for (i = 0; i < 4; ++i) {
-//        write(fdp2c[i][1], command, 900*sizeof(char));
-//    }
-
-//    for (i = 0; i < 4; i ++){
-//        pid = wait(NULL);
-//        close(fdp2c[i][1]);
-//        close(fdc2p[i][0]);
-//        //printf("Collected 1 child, %d\n", pid);
-//    }
     printf("Exited successfully\n\n");
     return 0;
 }
