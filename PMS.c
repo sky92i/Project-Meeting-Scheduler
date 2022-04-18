@@ -746,10 +746,9 @@ void scheduleAndPrint() // only to be called by children
             printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             // rejected meetings
             printf("\n\n*** Meeting Request - REJECTED ***\n\n"); fprintf(file, "\n\n*** Meeting Request - REJECTED ***\n\n");
-            printf("There are %d requests rejected for the required period.\n", numberOfRejects);
-            fprintf(file, "There are %d requests rejected for the required period.\n", numberOfRejects);
             printf("==================================================================================\n");
             fprintf(file, "==================================================================================\n");
+            int a = 0;
             for (i = startDateIndex; i < endDateIndex+1; i++)
             {
                 int j;
@@ -775,6 +774,9 @@ void scheduleAndPrint() // only to be called by children
                     else // may
                     {
                         strcpy(dummyDate, "05-");
+                        if (currentDate >= 2 && currentDate <= 9) {
+                            strcat(dummyDate, "0");
+                        }
                     }
                     sprintf(dummyDate2, "%d", currentDate);
                     strcat(dummyDate, dummyDate2);
@@ -788,10 +790,14 @@ void scheduleAndPrint() // only to be called by children
                     strcat(stringStartTime, ":00"); // string start time ok, to be printed
                     printf("%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
                     fprintf(file, "%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
+                    a++;
                 }
             }
-            printf("==================================================================================\n\n");
+            printf("==================================================================================\n");
             fprintf(file, "==================================================================================\n");
+            printf("There are %d requests rejected for the required period.\n\n\n", a);
+            fprintf(file, "There are %d requests rejected for the required period.\n\n\n", a);
+            printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             fclose(file);
             clearSchedule();
         }
