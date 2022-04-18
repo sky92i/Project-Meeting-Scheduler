@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,6 +8,7 @@
 #define NUM_APR_DATE 6 // number of dates in April
 #define NUM_MAY_DATE 12 // number of dates in May
 #define WORK_HR 9 // working hours per day
+#define MAX_MEETING_HR 5 // humane criteria
 
 // objects
 typedef struct {
@@ -29,17 +29,17 @@ typedef struct {
 }meeting;
 
 // just an idea
-typedef struct {
-    int available; // initialized as boolean value (0/1) to check if available timeslot
-    int teamsIndex; // index of the booked teams from teams array
-    char *projectName[20];
-}slot;
+//typedef struct {
+//    int available; // initialized as boolean value (0/1) to check if available timeslot
+//    int teamsIndex; // index of the booked teams from teams array
+//    char *projectName[20];
+//}slot;
 
 meeting recvMeetings[200] = {0}; // in child process, this array is used to receive all meeting requests (raw data)
 meeting meetings[200] = {0}; // in child process, this array is used to handle scheduling
 team teams[20] = {0};
-int fdp2c[4][2]; // parent -> child pipes
-int fdc2p[4][2]; // child -> parent pipes
+int fdp2c[1][2]; // parent -> child pipes
+int fdc2p[1][2]; // child -> parent pipes
 char *staff[] = {"Alan", "Billy", "Cathy", "David", "Eva", "Fanny", "Gary", "Helen"};
 int managerCount[NUM_STAFF] = {0};
 int memberCount[NUM_STAFF] = {0};
@@ -47,11 +47,11 @@ int staffCount = NUM_STAFF, slotsCount = 0, meetingsCount = 0, teamsCount = 0;
 int validDates[] = {25, 26, 27, 28, 29, 30, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14};
 int fcfs = 1; int prio = 1; // for file export counting
 
-int numberOfRejects = 0; // (FCFS)
-meeting acceptedMeetingsApr[NUM_STAFF][100] = {0}; // "8" stands for the number of staff members (FCFS)
-meeting acceptedMeetingsMay[NUM_STAFF][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning (FCFS)
-meeting acceptedMeetingsInorder[NUM_STAFF][200] = {0}; // combined of the meetings in both months, sorted by date and start time (FCFS)
-int numAcceptedMeetingsApr[NUM_STAFF] = {0}; // number of meetings accepted for each member (FCFS)
+int numberOfRejects = 0;
+meeting acceptedMeetingsApr[NUM_STAFF][100] = {0}; // "8" stands for the number of staff members
+meeting acceptedMeetingsMay[NUM_STAFF][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning
+meeting acceptedMeetingsInorder[NUM_STAFF][200] = {0}; // combined of the meetings in both months, sorted by date and start time
+int numAcceptedMeetingsApr[NUM_STAFF] = {0}; // number of meetings accepted for each member
 int numAcceptedMeetingsMay[NUM_STAFF] = {0}; // children
 int rejectedMeetingIndex[200] = {-1}; // children
 meeting rejectedMeetingsApr[100] = {0}; // children
@@ -131,7 +131,7 @@ void clearSchedule() // should be called by children after printing schedule eve
     memset(meetingHoursMay, 0, NUM_MAY_DATE * NUM_STAFF * sizeof(int));
 }
 
-void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings)
+void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings) // called by children
 {
     int minIndex, i, j;
     for (i = 0; i < numberOfMeetings - 1; i++)
@@ -156,7 +156,7 @@ void sortMeetings(meeting unsortedMeetings[], int numberOfMeetings)
     }
 }
 
-void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meeting sortedMeetingsInMay[], int numberOfMeetingsInApr, int numberOfMeetingsInMay)
+void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meeting sortedMeetingsInMay[], int numberOfMeetingsInApr, int numberOfMeetingsInMay) // called by children
 {
     int i;
     // meetings in April are put first
@@ -170,9 +170,11 @@ void mergeAprMay(meeting mergedMeetings[], meeting sortedMeetingsInApr[], meetin
     }
 }
 
-void prioSortMeetings(meeting original[], meeting prioSortedMeetings[]) // priority sorting, the meetings of the team with the smaller alphabet as the team name have higher priority, e.g. the meetings of Team_A should always have higher priority than that of Team_B
+void prioSortMeetings(meeting original[], meeting prioSortedMeetings[])
+// priority sorting, the meetings of the team with the smaller alphabet as the team name have higher priority, e.g. the meetings of Team_A should always have higher priority than that of Team_B
 // assume that all the team names are in the format of "Team_*", and "*" is the single alphabet in uppercase
 // stable sorting
+// called by children
 {
     memcpy(prioSortedMeetings, original, sizeof(meetings));
     int minIndex, i, j;
@@ -262,7 +264,7 @@ int searchValidDataIndex(int validDate)
             return i;
         }
     }
-    return -1;
+    return -1; // the date is not valid
 }
 
 int printScheduleCmmdCheck(char startDate[], char endDate[]) // to ensure the start date is less than the end date, if else reject the command
@@ -301,7 +303,7 @@ void scheduleAndPrint() // only to be called by children
 {
     char recvCmmd[30][30]; // received command
     // only the meetings between 25/4 to 14/5 will be considered valid
-    // the first element of the staff on the day stands for the time 0900-1000, etc. the last element ([X][X][9]) stands for the time 1700-1800
+    // the first element ([X][X][0]) of the staff on the day stands for the time 0900-1000, etc. The last element ([X][X][9]) stands for the time 1700-1800
     // considered boolean type, 0 stands for available, 1 stands for n/a
     while (1) // until a quit message is received from the parent
     {
@@ -435,10 +437,10 @@ void scheduleAndPrint() // only to be called by children
                 if (date >= 25 && date <= 30) // in April
                 {
                     int dateIndex = date - 25; // offset: 25 --> 0, 26 --> 1, ... , 30 --> 5
-                    int timeIndex = startTime - 9; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time to be 1800
-                    for (k = 0; k < 8; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
+                    int timeIndex = startTime - WORK_HR; // offset: 0900 --> 0, 1000 --> 1, ... , 1700 --> 8. Remarks: its not allowed that the start time to be 1800
+                    for (k = 0; k < NUM_STAFF; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
                     {
-                        if ((duration + meetingHoursApr[dateIndex][k]) > 5)
+                        if ((duration + meetingHoursApr[dateIndex][k]) > MAX_MEETING_HR)
                         {
                             accepted = 0;
                             break;
@@ -534,9 +536,9 @@ void scheduleAndPrint() // only to be called by children
                         dateIndex = date - 3; // offset: 9 --> 6, 10 --> 7, ... , 14 --> 11
                     }
                     int timeIndex = startTime - 9;
-                    for (k = 0; k < 8; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
+                    for (k = 0; k < NUM_STAFF; k++) // 8 staff members, checking human criteria: meeting hours not exceeding 5 per day
                     {
-                        if ((duration + meetingHoursMay[dateIndex][k]) > 5) // exceeding 5 hours
+                        if ((duration + meetingHoursMay[dateIndex][k]) > MAX_MEETING_HR) // exceeding 5 hours
                         {
                             accepted = 0;
                             break;
@@ -772,7 +774,7 @@ void scheduleAndPrint() // only to be called by children
                     char currentTeamName[21]; // to be printed
                     char stringDate[21] = "2022-"; // to be printed
                     char dummyDate[10], dummyDate2[4];
-                    char stringStartTime[10] = {0}, stringEndTime[10] = {0};
+                    char stringStartTime[10] = {0};
                     char dummyTime[6];
                     strcpy(currentTeamName, teams[currentTeamIndex].team);
                     if (currentDate >= 25 && currentDate <= 30) // april
@@ -813,10 +815,7 @@ void scheduleAndPrint() // only to be called by children
 int main(int argc, char *argv[]){
     // variables
     int i, j, valid;
-    char buf1[80];
-    char buf2[80];
     char batchBuf[80];
-    int pid = getpid();
     char tmpDate[3];
     char tmpInput[80] = {0};
     char input[30][30] = {0};
@@ -826,10 +825,8 @@ int main(int argc, char *argv[]){
     int option = 0;
     int staffAindex, staffBindex, staffCindex, staffDindex;
 
-    slot slots[162] = {0};
-
-    // create pipes for 4 child process: FCFS, XXXX, rescheduling, output
-    for (i = 0; i < 4; ++i) {
+    // create pipes for 1 child process
+    for (i = 0; i < 1; ++i) {
         // create parent -> child pipe
         if (pipe(fdp2c[i]) < 0){
             printf("Error in creating parent -> child pipe\n");
@@ -855,7 +852,7 @@ int main(int argc, char *argv[]){
             }
         }
         scheduleAndPrint();
-        printf("Child process finished.\n");
+//        printf("Child process finished.\n");
         close(fdp2c[0][0]);
         close(fdc2p[0][1]);
         exit(0);
@@ -865,7 +862,7 @@ int main(int argc, char *argv[]){
     sleep(1); // testing
 
     // closed unused pipes for parent
-    for (i = 0; i < 4; ++i) {
+    for (i = 0; i < 1; ++i) {
         close(fdp2c[i][0]);
         close(fdc2p[i][1]);
     }
