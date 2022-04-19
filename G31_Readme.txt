@@ -27,7 +27,7 @@ Duty:
 
 Set up & Execution
 ----------------------------------
-1. First compile the program using "gcc -o PMS PMS.c"
+1. First compile the program using "gcc -o PMS G31_PMS.c"
 2. Second execute the program by "./PMS"
 3. A menu will be displayed for user input
 
