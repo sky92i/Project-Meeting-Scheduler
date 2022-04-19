@@ -2,7 +2,7 @@ Project Meeting Scheduler (PMS)
 
 Contents of file
 ------------------------------------
-* Duty
+* Member
 * Set up & Execution
 * Menu
 * Option 1 (Create Project Team)
@@ -11,18 +11,13 @@ Contents of file
 * Option 4 (Exit)
 
 
-Duty
+Member
 -----------------------------------
-Leung Chun Kiu Xavier (20069897d)
-Duty: Part1 & part of report
-LI, Yulin ()
-Duty:
+Leung Chun Kiu Xavier 
+LI, Yulin
 NG, Ho Tin
-Duty:
-PARK, Jungwon ()
-Duty:
-YAM, Lok Yin ()
-Duty:
+PARK, Jungwon
+YAM, Lok Yin
 
 
 Set up & Execution
