@@ -798,8 +798,8 @@ void scheduleAndPrint() // only to be called by children
                     a++;
                 }
             }
-            //printf("==================================================================================\n");
-            fprintf(file, "==================================================================================\n");
+            //printf("===============================================================================================\n");
+            fprintf(file, "===============================================================================================\n");
             //printf("There are %d requests rejected for the required period.\n\n\n", a);
             fprintf(file, "There are %d requests rejected for the required period.\n\n\n", a);
             //printf("\t\t\t\t\t\t\t\t\t- End -\n");
