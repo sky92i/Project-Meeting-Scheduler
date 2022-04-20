@@ -1,0 +1,33 @@
+*** creating teams
+Team_A Project_A Alan Cathy Fanny Helen
+Team_B Project_B Cathy Billy Eva Helen
+Team_C Project_C David Billy Cathy Gary
+Team_D Project_D Fanny Billy Gary Helen
+Team_E Project_E Gary Alan David Eva
+
+*** task 2
+2a Team_A 2022-04-25 09:00 2
+2a Team_B 2022-05-14 15:00 3
+
+3a FCFS 2022-04-25 2022-05-14
+3a PRIO 2022-04-25 2022-05-14
+
+*** task 3
+2b demo_data01.dat
+
+3a FCFS 2022-04-25 2022-05-14
+3a PRIO 2022-04-25 2022-05-14
+
+*** task 4
+2b demo_data02.dat
+
+3a FCFS 2022-04-25 2022-05-14
+3a PRIO 2022-04-25 2022-05-14
+
+*** showing schedule
+cat G31_FCFS_Schd_01.dat
+cat G31_PRIO_Schd_01.dat
+cat G31_FCFS_Schd_02.dat
+cat G31_PRIO_Schd_02.dat
+cat G31_FCFS_Schd_03.dat
+cat G31_PRIO_Schd_03.dat
