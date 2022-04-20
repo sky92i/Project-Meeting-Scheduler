@@ -28,8 +28,8 @@ typedef struct {
     int duration;
 }meeting;
 
-meeting recvMeetings[200] = {0}; // in child process, this array is used to receive all meeting requests (raw data)
-meeting meetings[200] = {0}; // in child process, this array is used to handle scheduling
+meeting recvMeetings[600] = {0}; // in child process, this array is used to receive all meeting requests (raw data)
+meeting meetings[600] = {0}; // in child process, this array is used to handle scheduling
 team teams[20] = {0};
 int fdp2c[1][2]; // parent -> child pipes
 int fdc2p[1][2]; // child -> parent pipes
@@ -42,15 +42,15 @@ int validDates[] = {25, 26, 27, 28, 29, 30, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13,
 int fcfs = 1; int prio = 1; // for file export counting
 
 int numberOfRejects = 0;
-meeting acceptedMeetingsApr[NUM_STAFF][100] = {0}; // "8" stands for the number of staff members
-meeting acceptedMeetingsMay[NUM_STAFF][100] = {0}; // same as the above, not yet sorted by date and start time at the very beginning
-meeting acceptedMeetingsInorder[NUM_STAFF][200] = {0}; // combined of the meetings in both months, sorted by date and start time
+meeting acceptedMeetingsApr[NUM_STAFF][300] = {0}; // "8" stands for the number of staff members
+meeting acceptedMeetingsMay[NUM_STAFF][300] = {0}; // same as the above, not yet sorted by date and start time at the very beginning
+meeting acceptedMeetingsInorder[NUM_STAFF][600] = {0}; // combined of the meetings in both months, sorted by date and start time
 int numAcceptedMeetingsApr[NUM_STAFF] = {0}; // number of meetings accepted for each member
 int numAcceptedMeetingsMay[NUM_STAFF] = {0}; // children
 int rejectedMeetingIndex[200] = {-1}; // children
-meeting rejectedMeetingsApr[100] = {0}; // children
-meeting rejectedMeetingsMay[100] = {0}; // children
-meeting rejectedMeetings[200] = {0}; // children
+meeting rejectedMeetingsApr[300] = {0}; // children
+meeting rejectedMeetingsMay[300] = {0}; // children
+meeting rejectedMeetings[600] = {0}; // children
 int numRejectedMeetingsApr = 0; // children
 int numRejectedMeetingsMay = 0; // children
 int apr[NUM_APR_DATE][NUM_STAFF][WORK_HR] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
