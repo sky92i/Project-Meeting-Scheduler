@@ -1,5 +1,7 @@
 G31_PMS
 record.log
 .vscode/
-G31_FCFS*
-G31_PRIO*
+G31_FCFS_Schd_02.dat
+G31_FCFS_Schd_03.dat
+G31_PRIO_Schd_02.dat
+G31_PRIO_Schd_03.dat
