@@ -387,7 +387,7 @@ void scheduleAndPrint() // only to be called by children
             if (strcmp(recvCmmd[1], "PRIO") == 0) // if the selected algo is PRIO
             {
                 prioSortMeetings(recvMeetings, meetings);
-                char fname[] = "G31_PRIO_Schd_";     //deal with the file name
+                char fname[30] = "G31_PRIO_Schd_";     //deal with the file name
                 char buf[5];
                 sprintf(buf, "%d", prio);
                 if (prio < 10){ strcat(fname, "0"); }
@@ -401,7 +401,7 @@ void scheduleAndPrint() // only to be called by children
             else if (strcmp(recvCmmd[1], "FCFS") == 0)
             {
                 memcpy(meetings, recvMeetings, sizeof(recvMeetings));
-                char fname[] = "G31_FCFS_Schd_";     //deal with the file name
+                char fname[30] = "G31_FCFS_Schd_";     //deal with the file name
                 char buf[5];
                 sprintf(buf, "%d", fcfs);
                 if (fcfs < 10){ strcat(fname, "0"); }
