@@ -645,8 +645,10 @@ void scheduleAndPrint() // only to be called by children
             mergeAprMay(rejectedMeetings, rejectedMeetingsApr, rejectedMeetingsMay, numRejectedMeetingsApr, numRejectedMeetingsMay);
             // TODO: print the schedule to a txt file
             // printing on terminal, for testing, temporary codes
-            printf("*** Project Meeting ***\n\n");  fprintf(file, "*** Project Meeting ***\n\n");
-            printf("Algorithm used: %s\n", recvCmmd[1]);    fprintf(file, "Algorithm used: %s\n", recvCmmd[1]);
+            //printf("*** Project Meeting ***\n\n");
+            fprintf(file, "*** Project Meeting ***\n\n");
+            //printf("Algorithm used: %s\n", recvCmmd[1]);
+            fprintf(file, "Algorithm used: %s\n", recvCmmd[1]);
             int startMonth;
             int endMonth;
             if (startDate >= 25 && startDate <= 30)
@@ -681,14 +683,14 @@ void scheduleAndPrint() // only to be called by children
                 sprintf(dummStr, "%d", endDate);
                 strcat(stringEndDate, dummStr);
             }
-            printf("Period: 2022-0%d-%s to 2022-0%d-%s\n", startMonth, stringStartDate, endMonth, stringEndDate);
+            //printf("Period: 2022-0%d-%s to 2022-0%d-%s\n", startMonth, stringStartDate, endMonth, stringEndDate);
             fprintf(file, "Period: 2022-0%d-%s to 2022-0%d-%s\n", startMonth, stringStartDate, endMonth, stringEndDate);
             for (i = 0; i < 8; i++) // 8 staff members
             {
                 int j;
-                printf("Date\t\t\tStart\t\tEnd\t\tTeam\t\tProject\n");
+                //printf("Date\t\t\tStart\t\tEnd\t\tTeam\t\tProject\n");
                 fprintf(file, "Date\t\t\tStart\t\tEnd\t\tTeam\t\tProject\n");
-                printf("===============================================================================================\n");
+                //printf("===============================================================================================\n");
                 fprintf(file, "===============================================================================================\n");
                 for (j = startDateIndex; j < endDateIndex+1; j++)
                 {
@@ -735,19 +737,21 @@ void scheduleAndPrint() // only to be called by children
                         sprintf(dummyTime, "%d", currentEnd);
                         strcat(stringEndTime, dummyTime);
                         strcat(stringEndTime, ":00"); // string end time ok, to be printed
-                        printf("%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
+                        //printf("%s\t\t%s\t\t%s\t\t%s\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
                         fprintf(file, "%s\t\t%s\t\t%s\t\t%s\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
                     }
                 }
-                printf("===============================================================================================\n");
+                //printf("===============================================================================================\n");
                 fprintf(file, "===============================================================================================\n");
-                printf("Staff: %s\n\n\n",staff[i]);
+                //printf("Staff: %s\n\n\n",staff[i]);
                 fprintf(file, "Staff: %s\n\n\n",staff[i]);
             }
-            printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
+            //printf("\t\t\t\t\t\t\t\t\t- End -\n");
+            fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             // rejected meetings
-            printf("\n\n*** Meeting Request - REJECTED ***\n\n"); fprintf(file, "\n\n*** Meeting Request - REJECTED ***\n\n");
-            printf("===============================================================================================\n");
+            //printf("\n\n*** Meeting Request - REJECTED ***\n\n");
+            fprintf(file, "\n\n*** Meeting Request - REJECTED ***\n\n");
+            //printf("===============================================================================================\n");
             fprintf(file, "===============================================================================================\n");
             int a = 0;
             for (i = startDateIndex; i < endDateIndex+1; i++)
@@ -789,16 +793,17 @@ void scheduleAndPrint() // only to be called by children
                     sprintf(dummyTime, "%d", currentStart);
                     strcat(stringStartTime, dummyTime);
                     strcat(stringStartTime, ":00"); // string start time ok, to be printed
-                    printf("%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
+                    //printf("%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
                     fprintf(file, "%d.\t%s %s %s %d\n", j+1, currentTeamName, stringDate, stringStartTime, rejectedMeetings[j].duration);
                     a++;
                 }
             }
-            printf("==================================================================================\n");
+            //printf("==================================================================================\n");
             fprintf(file, "==================================================================================\n");
-            printf("There are %d requests rejected for the required period.\n\n\n", a);
+            //printf("There are %d requests rejected for the required period.\n\n\n", a);
             fprintf(file, "There are %d requests rejected for the required period.\n\n\n", a);
-            printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
+            //printf("\t\t\t\t\t\t\t\t\t- End -\n");
+            fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             fclose(file);
             clearSchedule();
         }
