@@ -38,6 +38,7 @@ int managerCount[NUM_STAFF] = {0};
 int memberCount[NUM_STAFF] = {0};
 int staffCount = NUM_STAFF, slotsCount = 0, meetingsCount = 0, teamsCount = 0;
 int validDates[] = {25, 26, 27, 28, 29, 30, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14};
+// only the meetings between 25/4 to 14/5 will be considered valid
 int fcfs = 1; int prio = 1; // for file export counting
 
 int numberOfRejects = 0;
@@ -54,6 +55,8 @@ int numRejectedMeetingsApr = 0; // children
 int numRejectedMeetingsMay = 0; // children
 int apr[NUM_APR_DATE][NUM_STAFF][WORK_HR] = {0}; // totally 6 working days in April, 8 members, 9 working hours per day
 int may[NUM_MAY_DATE][NUM_STAFF][WORK_HR] = {0}; // totally 12 working days in May
+// the first element ([X][X][0]) of the staff on the day stands for the time 0900-1000, etc. The last element ([X][X][9]) stands for the time 1700-1800
+// considered boolean type, 0 stands for available, 1 stands for n/a
 int meetingHoursApr[NUM_APR_DATE][NUM_STAFF] = {0}; // humane criteria, recording the meeting hours of each member each day, 6 days in April
 int meetingHoursMay[NUM_MAY_DATE][NUM_STAFF] = {0}; // 12 days in May
 
@@ -293,9 +296,7 @@ int printScheduleCmmdCheck(char startDate[], char endDate[]) // to ensure the st
 void scheduleAndPrint() // only to be called by children
 {
     char recvCmmd[30][30]; // received command
-    // only the meetings between 25/4 to 14/5 will be considered valid
-    // the first element ([X][X][0]) of the staff on the day stands for the time 0900-1000, etc. The last element ([X][X][9]) stands for the time 1700-1800
-    // considered boolean type, 0 stands for available, 1 stands for n/a
+
     while (1) // until a quit message is received from the parent
     {
         read(fdp2c[0][0], recvCmmd, 900 * sizeof(char));
@@ -685,10 +686,10 @@ void scheduleAndPrint() // only to be called by children
             for (i = 0; i < 8; i++) // 8 staff members
             {
                 int j;
-                printf("Date\t\t\tStart\t\tEnd\t\t\tTeam\t\t\tProject\n");
-                fprintf(file, "Date\t\t\tStart\t\tEnd\t\t\tTeam\t\t\tProject\n");
-                printf("==================================================================================\n");
-                fprintf(file, "==================================================================================\n");
+                printf("Date\t\t\tStart\t\tEnd\t\tTeam\t\tProject\n");
+                fprintf(file, "Date\t\t\tStart\t\tEnd\t\tTeam\t\tProject\n");
+                printf("===============================================================================================\n");
+                fprintf(file, "===============================================================================================\n");
                 for (j = startDateIndex; j < endDateIndex+1; j++)
                 {
                     int k;
@@ -735,19 +736,19 @@ void scheduleAndPrint() // only to be called by children
                         strcat(stringEndTime, dummyTime);
                         strcat(stringEndTime, ":00"); // string end time ok, to be printed
                         printf("%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
-                        fprintf(file, "%s\t\t%s\t\t%s\t\t%s\t\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
+                        fprintf(file, "%s\t\t%s\t\t%s\t\t%s\t\t%s\n", stringDate, stringStartTime, stringEndTime, currentTeamName, currentProject);
                     }
                 }
-                printf("==================================================================================\n");
-                fprintf(file, "==================================================================================\n");
+                printf("===============================================================================================\n");
+                fprintf(file, "===============================================================================================\n");
                 printf("Staff: %s\n\n\n",staff[i]);
                 fprintf(file, "Staff: %s\n\n\n",staff[i]);
             }
             printf("\t\t\t\t\t\t\t\t\t- End -\n"); fprintf(file, "\t\t\t\t\t\t\t\t\t- End -\n");
             // rejected meetings
             printf("\n\n*** Meeting Request - REJECTED ***\n\n"); fprintf(file, "\n\n*** Meeting Request - REJECTED ***\n\n");
-            printf("==================================================================================\n");
-            fprintf(file, "==================================================================================\n");
+            printf("===============================================================================================\n");
+            fprintf(file, "===============================================================================================\n");
             int a = 0;
             for (i = startDateIndex; i < endDateIndex+1; i++)
             {
